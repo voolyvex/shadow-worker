@@ -1,0 +1,37 @@
+# Godot-specific files
+.import/
+.godot/
+/android/
+
+# Godot editor backups
+*.tmp
+*.godot.import
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.pdb
+*.lib
+*.a
+
+# Compiled bindings (for Godot C++)
+*.o
+*.obj
+*.gdnlib
+*.dll
+*.dylib
+*.so
+*.a
+
+# Python virtual environment (if used)
+venv/
+__pycache__/
+
+# SCons files
+build/
