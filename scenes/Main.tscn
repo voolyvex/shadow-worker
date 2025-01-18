@@ -1,0 +1,51 @@
+[gd_scene load_steps=6 format=3 uid="uid://b6x8o0y6yg1qm"]
+
+[ext_resource type="TileSet" path="res://resources/tileset.tres" id="1_tileset"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
+[ext_resource type="Script" path="res://scripts/npc.gd" id="3_npc"]
+[ext_resource type="Texture2D" uid="uid://cmuqqvkv4rlpb" path="res://assets/player.png" id="4_player"]
+[ext_resource type="Texture2D" uid="uid://carvkjey4o3ue" path="res://assets/npc.png" id="5_npc"]
+
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 16.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_2"]
+radius = 100.0
+
+[node name="Main" type="Node2D"]
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = ExtResource("1_tileset")
+format = 2
+layer_0/name = "Ground"
+layer_0/tile_data = PackedInt32Array(0, 0, 0, 1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0, 5, 0, 0, 6, 0, 0, 7, 0, 0, 8, 0, 0, 9, 0, 0, 65536, 0, 0, 65537, 1, 0, 65538, 1, 0, 65539, 1, 0, 65540, 1, 0, 65541, 1, 0, 65542, 1, 0, 65543, 1, 0, 65544, 1, 0, 65545, 0, 0, 131072, 0, 0, 131073, 1, 0, 131074, 1, 0, 131075, 1, 0, 131076, 1, 0, 131077, 1, 0, 131078, 1, 0, 131079, 1, 0, 131080, 1, 0, 131081, 0, 0, 196608, 0, 0, 196609, 1, 0, 196610, 1, 0, 196611, 1, 0, 196612, 1, 0, 196613, 1, 0, 196614, 1, 0, 196615, 1, 0, 196616, 1, 0, 196617, 0, 0, 262144, 0, 0, 262145, 1, 0, 262146, 1, 0, 262147, 1, 0, 262148, 1, 0, 262149, 1, 0, 262150, 1, 0, 262151, 1, 0, 262152, 1, 0, 262153, 0, 0, 327680, 0, 0, 327681, 0, 0, 327682, 0, 0, 327683, 0, 0, 327684, 0, 0, 327685, 0, 0, 327686, 0, 0, 327687, 0, 0, 327688, 0, 0, 327689, 0, 0)
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(160, 96)
+script = ExtResource("2_player")
+metadata/_edit_group_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+shape = SubResource("CircleShape2D_1")
+
+[node name="Sprite2D" type="Sprite2D" parent="Player"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("4_player")
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+current = true
+
+[node name="NPC" type="Node2D" parent="."]
+position = Vector2(288, 96)
+script = ExtResource("3_npc")
+metadata/_edit_group_ = true
+
+[node name="Sprite2D" type="Sprite2D" parent="NPC"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("5_npc")
+
+[node name="Area2D" type="Area2D" parent="NPC"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="NPC/Area2D"]
+shape = SubResource("CircleShape2D_2")

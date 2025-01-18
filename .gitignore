@@ -2,6 +2,7 @@
 .import/
 .godot/
 /android/
+*.import
 
 # Godot editor backups
 *.tmp
@@ -14,24 +15,22 @@ desktop.ini
 
 # Build artifacts
 *.exe
-*.dll
-*.so
 *.pdb
 *.lib
 *.a
-
-# Compiled bindings (for Godot C++)
 *.o
 *.obj
-*.gdnlib
 *.dll
-*.dylib
 *.so
-*.a
+*.dylib
+*.framework
 
-# Python virtual environment (if used)
-venv/
-__pycache__/
+# Keep project binaries
+!/bin/*.dll
+!/bin/*.so
+!/bin/*.dylib
+!/bin/*.framework
 
 # SCons files
+.sconsign.dblite
 build/

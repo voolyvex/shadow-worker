@@ -1,0 +1,12 @@
+[configuration]
+entry_symbol = "shadow_worker_library_init"
+compatibility_minimum = "4.3"
+reloadable = true
+
+[libraries]
+linux.debug.x86_64 = "bin/libshadow_worker.so"
+linux.release.x86_64 = "bin/libshadow_worker.so"
+windows.debug.x86_64 = "bin/libshadow_worker.dll"
+windows.release.x86_64 = "bin/libshadow_worker.dll"
+macos.debug = "bin/libshadow_worker.framework"
+macos.release = "bin/libshadow_worker.framework" 

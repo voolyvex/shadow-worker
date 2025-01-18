@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Godot"
+		}
+	],
+	"settings": {
+		"python.experiments.enabled": false
+	}
+}
