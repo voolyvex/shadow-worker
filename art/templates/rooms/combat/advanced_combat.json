@@ -1,0 +1,101 @@
+{
+    "type": "combat",
+    "difficulty": 2,
+    "size": {
+        "x": 8,
+        "y": 8
+    },
+    "connections": [
+        {
+            "position": {"x": 0, "y": 4},
+            "direction": "west"
+        },
+        {
+            "position": {"x": 7, "y": 4},
+            "direction": "east"
+        }
+    ],
+    "spawns": [
+        {
+            "type": "ranged_enemy",
+            "position": {"x": 4, "y": 4},
+            "properties": {
+                "behavior": "defensive",
+                "health": 100,
+                "damage": 20
+            }
+        },
+        {
+            "type": "melee_enemy",
+            "position": {"x": 2, "y": 2},
+            "properties": {
+                "behavior": "aggressive",
+                "health": 75,
+                "damage": 30
+            }
+        },
+        {
+            "type": "melee_enemy",
+            "position": {"x": 6, "y": 6},
+            "properties": {
+                "behavior": "aggressive",
+                "health": 75,
+                "damage": 30
+            }
+        },
+        {
+            "type": "health_pickup",
+            "position": {"x": 1, "y": 6},
+            "properties": {
+                "amount": 50,
+                "respawn_time": 30
+            }
+        }
+    ],
+    "tiles": {
+        "walls": [
+            {"x": 0, "y": 0, "type": "corner"},
+            {"x": 7, "y": 0, "type": "corner"},
+            {"x": 0, "y": 7, "type": "corner"},
+            {"x": 7, "y": 7, "type": "corner"}
+        ],
+        "obstacles": [
+            {
+                "type": "breakable_crate",
+                "position": {"x": 3, "y": 3},
+                "properties": {
+                    "health": 50,
+                    "contains_pickup": true
+                }
+            },
+            {
+                "type": "pillar",
+                "position": {"x": 5, "y": 5},
+                "properties": {
+                    "provides_cover": true,
+                    "indestructible": true
+                }
+            }
+        ]
+    },
+    "lighting": {
+        "ambient": {
+            "color": "#2a2a2a",
+            "intensity": 0.5
+        },
+        "sources": [
+            {
+                "type": "point",
+                "position": {"x": 4, "y": 4},
+                "color": "#ff9933",
+                "intensity": 1.0,
+                "range": 6
+            }
+        ]
+    },
+    "metadata": {
+        "author": "system",
+        "version": "1.0",
+        "tags": ["combat", "medium", "balanced"]
+    }
+} 
