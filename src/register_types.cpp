@@ -2,6 +2,7 @@
 #include "example.h"
 #include "player.h"
 #include "npc.h"
+#include "world_system.h"
 
 #include <gdextension_interface.h>
 #include <godot_cpp/core/class_db.hpp>
@@ -17,6 +18,7 @@ void initialize_shadow_worker_module(ModuleInitializationLevel p_level) {
     
     GDREGISTER_CLASS(Player);
     GDREGISTER_CLASS(NPC);
+    GDREGISTER_CLASS(WorldSystem);
 }
 
 void uninitialize_shadow_worker_module(ModuleInitializationLevel p_level) {
