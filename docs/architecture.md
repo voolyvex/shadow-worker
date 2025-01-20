@@ -50,23 +50,27 @@ The game centers around a sophisticated psychological system that integrates:
    - Enneagram and DSM integration
    - Shadow aspects and projections
    - Surreal state management
+   - Comprehensive testing infrastructure
 
 2. **Psychological Systems**
    - Resonance state progression
    - Reality perception layers
    - Inner truth manifestations
    - Consciousness thresholds
+   - Visual effects system for psychological states
 
 3. **Base Game Systems**
    - Player movement and interaction
    - World generation framework
    - Basic object placement
+   - Automated testing framework
 
 ### In Progress
 1. **Integration Systems**
    - Collective consciousness mechanics
    - Reality distortion effects
    - Psychological event propagation
+   - Visual effects refinement
 
 2. **Visual Systems**
    - Surreal state visualization
@@ -129,11 +133,51 @@ class WorldSystem {
 };
 ```
 
+3. **Visual Effects System**
+```cpp
+class VisualEffectsManager {
+    // Core components
+    RealitySystem* reality_system;
+    ShaderMaterial* shader_material;
+    
+    // Effect management
+    std::map<String, EffectParameters> active_effects;
+    float global_distortion_intensity;
+    
+    // Effect parameters
+    struct EffectParameters {
+        float intensity;
+        float duration;
+        float elapsed_time;
+        Dictionary properties;
+        bool active;
+    };
+};
+```
+
+4. **Testing Infrastructure**
+```gdscript
+class TestRunner:
+    # Test tracking
+    var total_tests: int
+    var passed_tests: int
+    var failed_tests: int
+    
+    # Test suites
+    var reality_tests: RealitySystemTests
+    var effects_tests: VisualEffectsTests
+    
+    # Logging system
+    var logger: TestLogger
+```
+
 ### Data Flow
 1. Personality states influence world generation
 2. Environmental factors affect psychological states
 3. NPC interactions modify resonance levels
 4. Collective consciousness shapes reality
+5. Visual effects reflect psychological states
+6. Test results validate system integrity
 
 ## Development Roadmap
 
