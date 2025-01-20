@@ -1,5 +1,6 @@
 #include "personality_system.h"
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/core/class_db.hpp>
 
 using namespace godot;
 

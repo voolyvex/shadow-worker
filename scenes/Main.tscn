@@ -1,20 +1,28 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3 uid="uid://b4u8e2y1xtmd5"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
-[ext_resource type="TileSet" path="res://resources/tileset.tres" id="2_tileset"]
-[ext_resource type="Script" path="res://scripts/tilemap_manager.gd" id="3_tilemap"]
-[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="4_player"]
+[ext_resource type="Script" path="res://scripts/world_system.gd" id="2_world"]
+[ext_resource type="TileSet" uid="uid://bc3fsh3mj5nyq" path="res://resources/tileset.tres" id="3_tileset"]
+[ext_resource type="PackedScene" uid="uid://dxj3vq6n7riyd" path="res://scenes/player.tscn" id="4_player"]
+[ext_resource type="Script" path="res://scripts/debug_overlay.gd" id="5_debug"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
 
 [node name="WorldSystem" type="Node2D" parent="."]
+script = ExtResource("2_world")
 
 [node name="TileMap" type="TileMap" parent="WorldSystem"]
-tile_set = ExtResource("2_tileset")
+tile_set = ExtResource("3_tileset")
 format = 2
 layer_0/name = "Ground"
-script = ExtResource("3_tilemap")
+layer_1/name = "Walls"
+layer_1/enabled = true
+layer_1/modulate = Color(1, 1, 1, 1)
+layer_1/y_sort_enabled = false
+layer_1/y_sort_origin = 0
+layer_1/z_index = 0
+layer_1/tile_data = PackedInt32Array()
 
 [node name="Player" parent="." instance=ExtResource("4_player")]
 
@@ -24,6 +32,9 @@ script = ExtResource("3_tilemap")
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 220.0
-offset_bottom = 40.0
+offset_bottom = 47.0
 max_value = 100.0
 value = 100.0
+
+[node name="DebugOverlay" type="Node2D" parent="UI"]
+script = ExtResource("5_debug")

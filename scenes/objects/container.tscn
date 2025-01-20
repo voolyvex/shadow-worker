@@ -1,6 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=4 format=3 uid="uid://bxj3vq6n7riyd"]
 
-[ext_resource type="PackedScene" path="res://scenes/objects/base_object.tscn" id="1_base"]
+[ext_resource type="PackedScene" uid="uid://hxj3vq6n7riyd" path="res://scenes/objects/base_object.tscn" id="1_base"]
 [ext_resource type="Script" path="res://scripts/container.gd" id="2_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]

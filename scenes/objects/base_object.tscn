@@ -1,8 +1,11 @@
-[gd_scene format=3]
+[gd_scene load_steps=2 format=3 uid="uid://hxj3vq6n7riyd"]
+
+[ext_resource type="Script" path="res://scripts/base_object.gd" id="1_script"]
 
 [node name="BaseObject" type="StaticBody2D"]
 collision_layer = 2
 collision_mask = 1
+script = ExtResource("1_script")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 

@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://gxj3vq6n7riyd"]
+
+[ext_resource type="PackedScene" uid="uid://hxj3vq6n7riyd" path="res://scenes/objects/base_object.tscn" id="1_base"]
+
+[node name="Crate" instance=ExtResource("1_base")]
+
+[node name="Label" parent="." index="2"]
+text = "Press E to open crate" 

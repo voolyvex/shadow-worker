@@ -253,3 +253,189 @@ class TestRunner:
 2. Optimized reality distortion calculations
 3. Scalable NPC consciousness simulation
 4. Memory-efficient world generation
+
+## Current Structure
+
+### Core Systems
+- `WorldSystem`: Manages world generation, room creation, and object placement
+- `TileMapManager`: Handles tile-based operations and collision layers
+- `Constants`: Global enums and configuration values
+
+### Scene Hierarchy
+```
+scenes/
+├── Main.tscn (Root scene)
+│   ├── WorldSystem
+│   │   └── TileMap
+│   ├── Player
+│   └── UI
+│       ├── StaminaBar
+│       └── DebugOverlay
+├── objects/
+│   ├── base_object.tscn (Base interactable object)
+│   ├── container.tscn
+│   ├── workbench.tscn
+│   ├── crate.tscn
+│   ├── lamp.tscn
+│   └── plant.tscn
+└── npc.tscn
+```
+
+### Scripts Organization
+```
+scripts/
+├── main.gd (Main game controller)
+├── world_system.gd (World generation and management)
+├── tilemap_manager.gd (Tile-based operations)
+├── player.gd (Player movement and interactions)
+├── base_object.gd (Base interactable behavior)
+├── container.gd (Container-specific behavior)
+├── npc.gd (NPC behavior and dialogue)
+├── constants.gd (Global enums and constants)
+└── debug_overlay.gd (Debug visualization)
+```
+
+### Physics Layers
+1. World (Layer 1): Static environment
+2. Player (Layer 2): Player character
+3. Interactable (Layer 3): Objects that can be interacted with
+4. NPC (Layer 4): Non-player characters
+
+## Future Expansions
+
+### LLM Integration
+1. Dialogue System
+   - Dynamic NPC conversations using LLM
+   - Context-aware responses based on game state
+   - Memory system for conversation history
+   - Emotion and personality modeling
+
+2. Quest Generation
+   - Procedural quest generation using LLM
+   - Dynamic objectives based on player actions
+   - Adaptive difficulty scaling
+   - Multi-path quest resolution
+
+3. Environmental Storytelling
+   - Dynamic object descriptions
+   - Contextual world building
+   - Adaptive narrative elements
+
+### Visual Enhancements
+1. Lighting System
+   - Dynamic shadows
+   - Day/night cycle
+   - Light sources with unique properties
+   - Visual effects for different states
+
+2. Particle Systems
+   - Environmental particles
+   - Interaction feedback
+   - Status effects
+   - Weather system
+
+3. UI/UX Improvements
+   - Minimalist HUD
+   - Context-sensitive prompts
+   - Smooth transitions
+   - Accessibility options
+
+### Sound Design
+1. Ambient System
+   - Dynamic background music
+   - Environmental sounds
+   - Weather effects
+   - Time-based variations
+
+2. Interaction Audio
+   - Object-specific sounds
+   - Footsteps system
+   - Impact sounds
+   - Voice system for NPCs
+
+3. Spatial Audio
+   - 3D sound positioning
+   - Sound occlusion
+   - Reverb zones
+   - Distance-based effects
+
+### Gameplay Extensions
+1. Reality Manipulation
+   - Time manipulation
+   - Space distortion
+   - Object state changes
+   - Environmental puzzles
+
+2. Advanced AI
+   - NPC pathfinding
+   - Behavior trees
+   - Group dynamics
+   - Learning patterns
+
+3. Player Progression
+   - Skill system
+   - Equipment upgrades
+   - Knowledge accumulation
+   - Reality manipulation powers
+
+4. World Interaction
+   - Complex object interactions
+   - Environmental hazards
+   - Dynamic weather effects
+   - Time-based events
+
+## Implementation Priorities
+1. Core Systems Stabilization
+   - Fix remaining bugs
+   - Optimize performance
+   - Complete base interactions
+   - Establish testing framework
+
+2. LLM Integration (Phase 1)
+   - Basic dialogue system
+   - Simple quest generation
+   - Object descriptions
+   - Context management
+
+3. Visual and Audio Foundation
+   - Basic lighting system
+   - Essential sound effects
+   - UI improvements
+   - Particle effects
+
+4. Gameplay Mechanics
+   - Basic reality manipulation
+   - Simple NPC AI
+   - Core progression system
+   - Environmental interactions
+
+5. Advanced Features
+   - Complex LLM interactions
+   - Advanced visual effects
+   - Spatial audio
+   - Advanced AI behaviors
+
+## Development Guidelines
+1. Code Structure
+   - Use dependency injection
+   - Follow SOLID principles
+   - Implement proper error handling
+   - Maintain clear documentation
+
+2. Scene Organization
+   - Keep scenes modular
+   - Use scene inheritance
+   - Maintain clear node hierarchy
+   - Follow naming conventions
+
+3. Resource Management
+   - Optimize asset loading
+   - Use resource preloading
+   - Implement proper cleanup
+   - Monitor memory usage
+
+4. Testing
+   - Unit tests for core systems
+   - Integration tests for LLM features
+   - Performance benchmarks
+   - User experience testing
