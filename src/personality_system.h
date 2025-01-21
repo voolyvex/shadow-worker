@@ -1,9 +1,11 @@
-#ifndef PERSONALITY_SYSTEM_H
-#define PERSONALITY_SYSTEM_H
+#pragma once
 
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/classes/object.hpp>
+#include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/array.hpp>
+#include <godot_cpp/variant/string.hpp>
 #include <vector>
 #include <map>
 #include <string>
@@ -134,49 +136,25 @@ struct DevelopmentLevel {
 };
 
 // Main personality profile
-class PersonalityProfile {
-    GDCLASS(PersonalityProfile, Object)
+class PersonalityProfile : public Node {
+    GDCLASS(PersonalityProfile, Node)
 
 private:
-    EnneagramType primary_type;
-    std::vector<EnneagramType> wings;
-    DevelopmentLevel development;
-    DSMDimensions dsm_traits;
-    CoreTraits core_traits;
-    
-    // Jungian elements
-    std::map<JungianArchetype, float> archetype_influence;
-    std::vector<ShadowAspect> active_projections;
-    float individuation_progress;
-    
-    // Surreal psychological states
-    std::vector<SurrealState> current_symbolic_state;
-    float reality_distortion_level;
-    
-    // Dynamic state tracking
-    float stress_level;
-    float growth_potential;
+    int primary_type = 0;
+    float development_level = 0.0f;
+    float blood_corruption_level = 0.0f;
+    float cosmic_awareness = 0.0f;
+    float transformation_threshold = 0.8f;
+    float consciousness_threshold = 0.7f;
+    float consciousness_integration = 0.0f;
+    float reality_integration = 0.0f;
+    std::vector<String> psychological_echoes;
+    std::map<String, float> trait_values;
+    std::map<String, float> dsm_dimensions;
     std::map<String, float> emotional_state;
-    Dictionary behavioral_history;
     
-    // Internal beast/sovereign processing
-    void update_blood_corruption(double delta);
-    void process_cosmic_revelation();
-    void integrate_blood_memory(const String& memory);
-    void calculate_transformation_threshold();
-    
-    // New member variables
-    float blood_corruption_level;
-    float cosmic_awareness;
-    float transformation_threshold;
-    std::vector<Dictionary> cosmic_revelations;
-    
-    void update_development_level();
-    void process_stress_response();
-    void calculate_growth_direction();
-    void integrate_shadow_aspects();
-    void update_symbolic_state();
-    void process_archetype_dynamics();
+    float stress_level = 0.0f;
+    std::map<String, float> behavioral_history;
 
 protected:
     static void _bind_methods();
@@ -184,66 +162,38 @@ protected:
 public:
     PersonalityProfile();
     ~PersonalityProfile();
-    
-    // Core personality methods
-    void set_enneagram_type(EnneagramType type);
-    EnneagramType get_enneagram_type() const;
-    void add_wing(EnneagramType wing);
-    void set_development_level(int level);
-    
-    // DSM trait methods
+
+    void set_enneagram_type(int type);
+    int get_enneagram_type() const;
+    void set_development_level(float level);
+    float get_development_level() const;
+    void update_development_level(float delta);
+    void process_blood_resonance(float intensity);
+    void handle_cosmic_insight(float intensity);
+    void process_event(const Dictionary& event);
+    void update_beast_state(float delta);
+    Vector2 get_position() const;
+    Dictionary get_emotional_state() const;
+    float get_trait(const String& trait_name) const;
+    bool get_beast_state() const;
+    float get_insight_level() const;
+    Array get_blood_memories() const;
+    bool has_eyes_on_the_inside() const;
+    Dictionary get_cosmic_state() const;
+    Dictionary to_dictionary() const;
+    void from_dictionary(const Dictionary& dict);
+
+    void add_shadow_aspect(const String& aspect_name);
+    void add_surreal_state(const String& state_name);
+    void add_behavior_pattern(const String& pattern_name);
+    void process_stress_response();
+    void process_projection();
+    void handle_stress(const Dictionary& stressor);
+    void update_emotional_state(const String& emotion, float value);
     void set_dsm_dimension(const String& dimension, float value);
     float get_dsm_dimension(const String& dimension) const;
-    
-    // Shadow and archetype methods
-    void add_shadow_aspect(const String& trait, float intensity, bool is_positive);
-    void process_projection(const String& trait, Node* target);
-    float get_archetype_influence(JungianArchetype archetype) const;
-    Array get_active_projections() const;
-    
-    // Surreal state methods
-    void add_surreal_state(const String& symbol, float distortion);
-    Dictionary get_symbolic_state() const;
-    float get_reality_distortion() const;
-    
-    // Behavioral methods
-    void add_behavior_pattern(const String& behavior, float weight, const Dictionary& context);
-    Array get_behavior_patterns() const;
-    float calculate_behavior_probability(const String& behavior, const Dictionary& context) const;
-    
-    // State management
-    void update_emotional_state(const String& emotion, float intensity);
-    float get_emotional_intensity(const String& emotion) const;
-    void process_event(const Dictionary& event);
     Dictionary get_current_state() const;
-    
-    // Development and growth
-    void simulate_growth(double delta);
-    void handle_stress(const Dictionary& stressor);
-    Dictionary get_growth_opportunities() const;
-    float get_individuation_progress() const;
-    
-    // Psychological systems
-    void process_resonance(float intensity);
-    void update_perception_layer(double delta);
-    void handle_inner_revelation(const Dictionary& revelation);
-    float calculate_consciousness_threshold() const;
-    
-    void trigger_reality_shift(float catalyst_strength);
-    void resist_dissolution(float willpower);
-    
-    // State queries
-    ResonanceState get_resonance_state() const;
-    float get_consciousness_level() const;
-    Array get_psychological_echoes() const;
-    bool has_reality_shaping() const;
-    Dictionary get_inner_state() const;
-    
-    // Serialization
-    Dictionary to_dictionary() const;
-    void from_dictionary(const Dictionary& data);
+    Vector2 get_global_position() const;
 };
 
-}
-
-#endif // PERSONALITY_SYSTEM_H 
+} 

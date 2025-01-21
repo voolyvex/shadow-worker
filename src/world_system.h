@@ -1,14 +1,17 @@
-#ifndef WORLD_SYSTEM_H
-#define WORLD_SYSTEM_H
+#pragma once
 
 #include <godot_cpp/classes/node2d.hpp>
 #include <godot_cpp/classes/tile_map.hpp>
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/variant/vector2.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/vector2i.hpp>
+#include <godot_cpp/variant/array.hpp>
 #include <vector>
 #include <random>
 #include <string>
 
-namespace godot {
+using namespace godot;
 
 // Object types that can be placed in rooms
 enum class ObjectType {
@@ -21,11 +24,9 @@ enum class ObjectType {
 
 // Object placement data
 struct PlaceableObject {
-    ObjectType type;
-    String scene_path;
-    float spawn_weight;
-    bool requires_wall;
-    bool blocks_path;
+    String type;
+    Vector2 position;
+    Dictionary properties;
 };
 
 struct Room {
@@ -40,7 +41,7 @@ class WorldSystem : public Node2D {
     GDCLASS(WorldSystem, Node2D)
 
 private:
-    TileMap* tile_map;
+    TileMap* tile_map = nullptr;
     std::vector<Room> rooms;
     int current_seed;
     std::mt19937 rng;
@@ -61,6 +62,11 @@ private:
     int max_npcs_per_room;
     String npc_scene_path;
     
+    std::vector<Vector2> spawn_points;
+    std::vector<Vector2i> navigation_grid;
+    Array placeable_objects_array;
+    static const int FIELD_SIZE = 32;
+
     void generate_room_layout();
     void connect_rooms();
     void place_objects();
@@ -73,6 +79,13 @@ private:
     Vector2i find_random_floor_position(const Room& room);
     void place_object_in_room(Room& room, const PlaceableObject& obj);
     void update_room_navigation(Room& room, const Vector2i& pos, bool blocks_path);
+    void initialize_placeable_objects();
+    void initialize_spawn_points();
+    void initialize_navigation();
+    Vector2 get_random_spawn_point() const;
+
+    int determine_tile_type(float noise_value) const;
+    int get_object_tile_index(const String& object_type) const;
 
 protected:
     static void _bind_methods();
@@ -82,10 +95,10 @@ public:
     ~WorldSystem();
 
     void _init();
-    void _ready();
+    void _ready() override;
     
     // World generation methods
-    void generate_world(int seed);
+    void generate_world(const Dictionary& params);
     void clear_world();
     
     // Getters and setters
@@ -97,8 +110,8 @@ public:
     void set_npc_scene(const String& scene_path);
     void set_npc_count_range(int min_count, int max_count);
     void add_placeable_object(const String& scene_path, ObjectType type, float weight, bool wall_required, bool blocks_path);
-};
-
-}
-
-#endif // WORLD_SYSTEM_H 
+    Vector2i get_tile_position(const Vector2& world_pos) const;
+    Vector2 get_world_position(const Vector2i& tile_pos) const;
+    bool is_position_valid(const Vector2& pos) const;
+    Array get_placeable_objects() const;
+}; 

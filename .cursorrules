@@ -1,1 +1,103 @@
-execute Power Shell commands in the terminal one at a time
+# Enhanced .cursorrules for Shadow Worker Development
+
+# General Rule
+Cursor: execute Power Shell commands in the terminal one at a time
+
+# AI-Assisted Development Rules
+
+1. When editing JSON templates, suggest corrections or enhancements that improve compatibility with scaling, transitions, and gameplay balance.
+   - Validate room dimensions, connection points, and spawn placements against integration rules.
+   - Automatically propose fixes for detected issues in real-time.
+
+2. Automatically generate scaled versions of room templates using the defined scaling modes (PixelPerfect, Smooth, Detailed) when templates are added or updated.
+   - Provide previews of scaled templates for validation.
+   - Ensure gameplay features (doors, spawns, obstacles) are preserved during scaling.
+
+3. For collective consciousness mechanics, assist in generating NPC personality profiles by cross-referencing DSM-5 dimensions and Enneagram types.
+   - Suggest archetype-driven dialogue snippets.
+   - Validate resonance state consistency during interactions.
+
+4. Enhance template transitions by automating the creation of smooth or sharp transitions between room types.
+   - Analyze neighboring templates for compatibility.
+   - Automatically adjust height, orientation, and texture blends for seamless integration.
+
+5. Implement automated testing triggers when modifications are made to room templates, psychological systems, or world generation scripts.
+   - Run associated test suites, such as `RealitySystemTests` or `VisualEffectsTests`.
+   - Provide detailed logs and suggest fixes for failed tests.
+
+6. Monitor performance during template validation and testing, offering optimization suggestions.
+   - Highlight bottlenecks in memory management or loading times.
+   - Recommend efficient batching or caching strategies.
+
+7. Enable AI-driven content suggestions for psychological resonance and environmental storytelling.
+   - Generate room descriptions, NPC interactions, or quest objectives tailored to the game's psychological themes.
+   - Ensure suggestions align with player progression mechanics.
+
+8. Actively assist in shader system configuration for surreal state visualization.
+   - Recommend parameters for distortion effects, transition smoothness, and visual intensity.
+   - Simulate psychological states and offer previews for validation.
+
+9. Automatically log changes made to key systems (PersonalityProfile, WorldSystem, VisualEffectsManager) and test results.
+   - Maintain a changelog for audit and rollback purposes.
+   - Generate impact reports for large-scale modifications.
+
+10. Facilitate LLM integration by auto-generating templates for:
+    - NPC dialogues based on psychological traits.
+    - Procedural quest content with adaptive difficulty.
+    - Dynamic room annotations for storytelling.
+
+# Developer Workflow Enhancements
+
+- Recommend context-specific PowerShell commands for template testing, scaling, or integration.
+- Enable undo functionality for template changes via version control hooks.
+- Provide inline guidance for SOLID principles during script modifications.
+
+# Performance Safety Rules
+
+1. Monitor resource usage during template operations.
+   - Issue warnings if memory or processing thresholds are exceeded.
+   - Automatically pause resource-intensive operations to avoid crashes.
+
+2. Validate scaling requests and offer suggestions for compatible sizes or modes.
+   - Prevent incompatible configurations from being applied.
+   - Highlight potential gameplay impacts of requested changes.
+
+3. Execute background processes (e.g., scaling or template generation) asynchronously, keeping the IDE responsive.
+
+# Cursor Rule: Intelligent Use of Shadow Workspace
+
+1. **Dynamic Workspace Organization**
+   - Automatically categorize files, assets, and templates into logical groups (e.g., scripts, tests, assets, environments) within the shadow workspace.
+   - Propose folder structures and naming conventions that improve discoverability and maintainability.
+
+2. **Focused Task Context**
+   - Maintain a task-specific view by highlighting relevant files and dependencies for the current objective.
+   - Minimize distractions by hiding unrelated resources while preserving easy access.
+
+3. **Versioning and Tracking**
+   - Automatically save incremental versions of files within the shadow workspace.
+   - Provide a changelog view for all edits made during the session, enabling quick rollback or comparison.
+
+4. **Intelligent Resource Management**
+   - Optimize resource usage by preloading commonly accessed files, caching critical data, and clearing redundant temporary files.
+   - Notify users when resource usage is nearing limits, offering suggestions for optimization or cleanup.
+
+5. **Seamless Collaboration**
+   - Support real-time synchronization of changes between the shadow workspace and live environments.
+   - Allow selective syncing to commit only validated or approved changes.
+
+6. **AI-Guided Enhancements**
+   - Use the shadow workspace as a sandbox for testing AI-generated suggestions before applying them to the main workspace.
+   - Provide detailed feedback on the implications of applying shadow workspace changes.
+
+7. **Automated Testing and Validation**
+   - Run automated tests on changes within the shadow workspace to detect potential issues early.
+   - Highlight test results directly within the workspace, linking errors to the relevant files.
+
+8. **Optimized Feedback Loop**
+   - Suggest actionable next steps based on the state of the shadow workspace, prioritizing tasks that unblock progress.
+   - Provide reminders for untested or uncommitted changes before ending a session.
+
+# Summary
+Leverage the shadow workspace as an intelligent, adaptable environment for experimentation, testing, and incremental development, maximizing productivity while safeguarding stability.
+

@@ -2,12 +2,18 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/sprite2d.hpp>
+#include <godot_cpp/classes/animated_sprite2d.hpp>
+#include <godot_cpp/classes/camera2d.hpp>
+#include <godot_cpp/classes/input.hpp>
 
 using namespace godot;
 
 void Player::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_speed", "speed"), &Player::set_speed);
     ClassDB::bind_method(D_METHOD("get_speed"), &Player::get_speed);
+    ClassDB::bind_method(D_METHOD("set_max_speed", "speed"), &Player::set_max_speed);
+    ClassDB::bind_method(D_METHOD("get_max_speed"), &Player::get_max_speed);
     ClassDB::bind_method(D_METHOD("set_sprint_multiplier", "multiplier"), &Player::set_sprint_multiplier);
     ClassDB::bind_method(D_METHOD("get_sprint_multiplier"), &Player::get_sprint_multiplier);
     ClassDB::bind_method(D_METHOD("get_stamina"), &Player::get_stamina);
@@ -52,23 +58,60 @@ void Player::_init() {
 }
 
 void Player::_ready() {
-    sprite = Object::cast_to<AnimatedSprite2D>(get_node("AnimatedSprite2D"));
-    ERR_FAIL_NULL_MSG(sprite, "Player requires an AnimatedSprite2D child node!");
+    sprite = get_node<AnimatedSprite2D>("AnimatedSprite2D");
+    camera = get_node<Camera2D>("Camera2D");
     
-    interaction_ray = Object::cast_to<RayCast2D>(get_node("InteractionRay"));
-    ERR_FAIL_NULL_MSG(interaction_ray, "Player requires an InteractionRay (RayCast2D) child node!");
+    if (!sprite) {
+        UtilityFunctions::print("Warning: AnimatedSprite2D node not found");
+    }
     
-    set_physics_process(true);
-    set_process(true);
+    if (camera) {
+        camera->make_current();
+    }
+    
+    // Initialize movement variables
+    velocity = Vector2(0, 0);
+    speed = base_speed;
+    stamina = max_stamina;
 }
 
 void Player::_process(double delta) {
-    update_animation();
-    handle_interaction();
-    update_stamina(delta);
+    Input* input = Input::get_singleton();
     
-    if (interaction_timer > 0) {
-        interaction_timer -= delta;
+    // Get input direction
+    Vector2 input_direction;
+    input_direction.x = input->get_action_strength("move_right") - input->get_action_strength("move_left");
+    input_direction.y = input->get_action_strength("move_down") - input->get_action_strength("move_up");
+    
+    // Normalize input direction
+    if (input_direction.length() > 0) {
+        input_direction = input_direction.normalized();
+    }
+    
+    // Handle sprinting and stamina
+    bool is_sprinting = input->is_action_pressed("sprint") && stamina > 0;
+    float target_speed = is_sprinting ? sprint_speed : base_speed;
+    
+    if (is_sprinting && input_direction.length() > 0) {
+        stamina = Math::clamp(stamina - static_cast<float>(delta) * stamina_drain_rate, 0.0f, max_stamina);
+    } else {
+        stamina = Math::clamp(stamina + static_cast<float>(delta) * stamina_regen_rate, 0.0f, max_stamina);
+    }
+    
+    // Update velocity with linear interpolation
+    Vector2 target_velocity = input_direction * target_speed;
+    velocity = velocity.lerp(target_velocity, static_cast<float>(delta) * acceleration);
+    
+    // Update position
+    set_position(get_position() + velocity * static_cast<float>(delta));
+    
+    // Update animation
+    if (sprite) {
+        String anim_name = velocity.length() > 0 ? "walk" : "idle";
+        if (current_animation != anim_name) {
+            current_animation = anim_name;
+            sprite->set_flip_h(velocity.x < 0);
+        }
     }
 }
 
@@ -119,31 +162,27 @@ void Player::apply_movement(double delta) {
 
 void Player::update_stamina(double delta) {
     if (is_sprinting && is_moving) {
-        stamina = Math::max(0.0f, stamina - stamina_drain_rate * delta);
+        stamina = Math::max<float>(0.0f, stamina - stamina_drain_rate * delta);
     } else if (stamina < max_stamina) {
-        stamina = Math::min(max_stamina, stamina + stamina_regen_rate * delta);
+        stamina = Math::min<float>(max_stamina, stamina + stamina_regen_rate * delta);
     }
 }
 
 void Player::update_animation() {
     if (!sprite) return;
     
-    String new_animation = "idle";
+    String anim_name = "idle";
     bool flip_h = false;
     
-    if (is_moving) {
-        new_animation = is_sprinting ? "run" : "walk";
-        
-        if (input_vector.x != 0) {
-            flip_h = input_vector.x < 0;
-        }
+    if (velocity.length() > 10.0f) {
+        anim_name = "walk";
+        flip_h = velocity.x < 0;
     }
     
-    if (new_animation != current_animation) {
-        sprite->play(new_animation);
-        current_animation = new_animation;
+    if (anim_name != current_animation) {
+        sprite->play(anim_name);
+        current_animation = anim_name;
     }
-    
     sprite->set_flip_h(flip_h);
 }
 
@@ -176,7 +215,7 @@ void Player::handle_interaction() {
 }
 
 bool Player::is_interaction_ready() const {
-    return interaction_timer <= 0;
+    return interaction_timer <= 0.0f;
 }
 
 void Player::set_interactable(Node* interactable) {
@@ -198,11 +237,19 @@ Node* Player::get_interactable() const {
 }
 
 void Player::set_speed(float p_speed) {
-    speed = p_speed;
+    base_speed = p_speed;
 }
 
 float Player::get_speed() const {
-    return speed;
+    return base_speed;
+}
+
+void Player::set_max_speed(float p_speed) {
+    sprint_speed = p_speed;
+}
+
+float Player::get_max_speed() const {
+    return sprint_speed;
 }
 
 void Player::set_sprint_multiplier(float p_multiplier) {

@@ -4,10 +4,15 @@ import os
 import sys
 
 # Use external godot-cpp bindings
-env = SConscript("C:/Godot/godot-cpp/SConstruct")
+env = SConscript("godot-cpp/SConstruct")
 
-# Add source files
-env.Append(CPPPATH=["src/"])
+# Add source files and include paths
+env.Append(CPPPATH=[
+    "src/",
+    "godot-cpp/gdextension/",
+    "godot-cpp/include/",
+    "godot-cpp/gen/include/"
+])
 sources = Glob("src/*.cpp")
 
 # Ensure bin directory exists

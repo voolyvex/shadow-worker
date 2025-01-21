@@ -1,13 +1,13 @@
-#ifndef PLAYER_H
-#define PLAYER_H
+#pragma once
 
 #include <godot_cpp/classes/character_body2d.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/animated_sprite2d.hpp>
 #include <godot_cpp/classes/ray_cast2d.hpp>
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/classes/camera2d.hpp>
 
-namespace godot {
+using namespace godot;
 
 class Player : public CharacterBody2D {
     GDCLASS(Player, CharacterBody2D)
@@ -25,7 +25,6 @@ private:
     bool is_sprinting;
     float sprint_multiplier;
     float stamina;
-    float max_stamina;
     float stamina_regen_rate;
     float stamina_drain_rate;
 
@@ -40,6 +39,12 @@ private:
     float interaction_cooldown;
     float interaction_timer;
 
+    Camera2D* camera;
+    float base_speed = 100.0f;
+    float sprint_speed = 200.0f;
+    float current_stamina = 100.0f;
+    float max_stamina = 100.0f;
+
     // Internal methods
     void update_animation();
     void update_stamina(double delta);
@@ -53,8 +58,8 @@ public:
     ~Player();
 
     void _init();
-    void _ready();
-    void _process(double delta);
+    void _ready() override;
+    void _process(double delta) override;
     void _physics_process(double delta);
     
     // Movement methods
@@ -76,8 +81,9 @@ public:
     float get_stamina() const;
     float get_max_stamina() const;
     void set_max_stamina(float p_max_stamina);
-};
 
-}
+    void set_max_speed(float speed);
+    float get_max_speed() const;
 
-#endif // PLAYER_H 
+    void interact();
+}; 

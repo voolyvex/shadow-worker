@@ -7,7 +7,5 @@
 			"path": "../Godot"
 		}
 	],
-	"settings": {
-		"python.experiments.enabled": false
-	}
+	"settings": {}
 }

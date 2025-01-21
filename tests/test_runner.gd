@@ -1,5 +1,7 @@
 extends SceneTree
 
+const Constants = preload("res://tests/test_constants.gd")
+
 var total_tests = 0
 var passed_tests = 0
 var failed_tests = 0
@@ -8,8 +10,12 @@ var exit_code = 0
 func _init():
     print("Starting test suite in headless mode...")
     
+    # Initialize constants
+    var constants = Constants.new()
+    get_root().add_child(constants)
+    
     var test_scene = load("res://tests/test_scene.tscn").instantiate()
-    root.add_child(test_scene)
+    get_root().add_child(test_scene)
     
     # Give nodes a chance to initialize
     await get_root().ready

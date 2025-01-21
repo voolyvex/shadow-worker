@@ -7,22 +7,17 @@
 #include <queue>
 #include <algorithm>
 #include <chrono>
+#include <godot_cpp/classes/tile_map.hpp>
 
 using namespace godot;
 
 void WorldSystem::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("set_seed", "seed"), &WorldSystem::set_seed);
-    ClassDB::bind_method(D_METHOD("get_seed"), &WorldSystem::get_seed);
-    ClassDB::bind_method(D_METHOD("generate_world", "seed"), &WorldSystem::generate_world);
     ClassDB::bind_method(D_METHOD("clear_world"), &WorldSystem::clear_world);
-    ClassDB::bind_method(D_METHOD("set_object_density", "density"), &WorldSystem::set_object_density);
-    ClassDB::bind_method(D_METHOD("set_npc_scene", "scene_path"), &WorldSystem::set_npc_scene);
-    ClassDB::bind_method(D_METHOD("set_npc_count_range", "min_count", "max_count"), &WorldSystem::set_npc_count_range);
-    ClassDB::bind_method(D_METHOD("add_placeable_object", "scene_path", "type", "weight", "wall_required", "blocks_path"), &WorldSystem::add_placeable_object);
-    
-    ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
-    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "object_density"), "set_object_density", "get_object_density");
-    ADD_PROPERTY(PropertyInfo(Variant::STRING, "npc_scene"), "set_npc_scene", "get_npc_scene");
+    ClassDB::bind_method(D_METHOD("generate_world", "params"), &WorldSystem::generate_world);
+    ClassDB::bind_method(D_METHOD("get_tile_position", "world_pos"), &WorldSystem::get_tile_position);
+    ClassDB::bind_method(D_METHOD("get_world_position", "tile_pos"), &WorldSystem::get_world_position);
+    ClassDB::bind_method(D_METHOD("is_position_valid", "pos"), &WorldSystem::is_position_valid);
+    ClassDB::bind_method(D_METHOD("get_placeable_objects"), &WorldSystem::get_placeable_objects);
 }
 
 WorldSystem::WorldSystem() : 
@@ -53,301 +48,182 @@ void WorldSystem::_init() {
 }
 
 void WorldSystem::_ready() {
-    tile_map = Object::cast_to<TileMap>(get_node("TileMap"));
-    ERR_FAIL_NULL_MSG(tile_map, "WorldSystem requires a TileMap child node!");
-}
-
-void WorldSystem::generate_world(int seed) {
-    set_seed(seed);
-    clear_world();
-    generate_room_layout();
-    connect_rooms();
-    place_objects();
-    place_npcs();
-}
-
-void WorldSystem::generate_room_layout() {
-    rooms.clear();
-    
-    // Determine number of rooms
-    std::uniform_int_distribution<int> room_count_dist(min_rooms, max_rooms);
-    int num_rooms = room_count_dist(rng);
-    
-    std::uniform_int_distribution<int> size_dist(min_room_size, max_room_size);
-    std::uniform_int_distribution<int> pos_dist(-50, 50); // Adjust range as needed
-    
-    // Generate rooms with random sizes and positions
-    for (int i = 0; i < num_rooms; i++) {
-        Room room;
-        bool valid_position = false;
-        
-        // Keep trying positions until we find a non-overlapping one
-        while (!valid_position) {
-            room.size = Vector2i(size_dist(rng), size_dist(rng));
-            room.position = Vector2i(pos_dist(rng), pos_dist(rng));
-            room.connected = false;
-            
-            valid_position = true;
-            for (const auto& existing_room : rooms) {
-                if (rooms_overlap(room, existing_room)) {
-                    valid_position = false;
-                    break;
-                }
-            }
-        }
-        
-        rooms.push_back(room);
+    tile_map = get_node<TileMap>("TileMap");
+    if (!tile_map) {
+        UtilityFunctions::print("Error: TileMap node not found");
+        return;
     }
+    
+    initialize_placeable_objects();
+    initialize_spawn_points();
+    initialize_navigation();
 }
 
-bool WorldSystem::rooms_overlap(const Room& a, const Room& b) {
-    // Add padding between rooms
-    const int padding = 2;
+void WorldSystem::initialize_placeable_objects() {
+    // Create workbench
+    PlaceableObject workbench;
+    workbench.type = "workbench";
+    workbench.position = Vector2(100, 100);
+    workbench.properties["crafting_level"] = 1;
+    workbench.properties["durability"] = 100;
+    placeable_objects.push_back(workbench);
     
-    bool x_overlap = (a.position.x - padding < b.position.x + b.size.x + padding) &&
-                    (a.position.x + a.size.x + padding > b.position.x - padding);
-                    
-    bool y_overlap = (a.position.y - padding < b.position.y + b.size.y + padding) &&
-                    (a.position.y + a.size.y + padding > b.position.y - padding);
-                    
-    return x_overlap && y_overlap;
+    // Create altar
+    PlaceableObject altar;
+    altar.type = "altar";
+    altar.position = Vector2(300, 300);
+    altar.properties["ritual_power"] = 1;
+    altar.properties["corruption"] = 0;
+    placeable_objects.push_back(altar);
+    
+    // Create library
+    PlaceableObject library;
+    library.type = "library";
+    library.position = Vector2(500, 100);
+    library.properties["knowledge_level"] = 1;
+    library.properties["book_count"] = 50;
+    placeable_objects.push_back(library);
+    
+    // Create laboratory
+    PlaceableObject laboratory;
+    laboratory.type = "laboratory";
+    laboratory.position = Vector2(700, 300);
+    laboratory.properties["research_level"] = 1;
+    laboratory.properties["contamination"] = 0;
+    placeable_objects.push_back(laboratory);
+    
+    // Create ritual circle
+    PlaceableObject ritual_circle;
+    ritual_circle.type = "ritual_circle";
+    ritual_circle.position = Vector2(900, 500);
+    ritual_circle.properties["power_level"] = 1;
+    ritual_circle.properties["stability"] = 100;
+    placeable_objects.push_back(ritual_circle);
 }
 
-void WorldSystem::connect_rooms() {
-    if (rooms.empty()) return;
-    
-    // Mark first room as connected
-    rooms[0].connected = true;
-    
-    // Keep connecting rooms until all are connected
-    while (std::any_of(rooms.begin(), rooms.end(), 
-           [](const Room& r) { return !r.connected; })) {
+void WorldSystem::initialize_spawn_points() {
+    // Add spawn points at strategic locations
+    spawn_points.push_back(Vector2(150, 150));
+    spawn_points.push_back(Vector2(450, 450));
+    spawn_points.push_back(Vector2(750, 150));
+    spawn_points.push_back(Vector2(150, 750));
+}
+
+void WorldSystem::initialize_navigation() {
+    // Set up navigation grid
+    if (tile_map) {
+        // Get tilemap dimensions
+        Rect2 bounds = tile_map->get_used_rect();
+        navigation_grid.resize(bounds.size.x * bounds.size.y);
         
-        int closest_unconnected = -1;
-        int closest_connected = -1;
-        float min_distance = std::numeric_limits<float>::max();
-        
-        // Find the closest pair of connected and unconnected rooms
-        for (size_t i = 0; i < rooms.size(); i++) {
-            if (!rooms[i].connected) {
-                for (size_t j = 0; j < rooms.size(); j++) {
-                    if (rooms[j].connected) {
-                        float dist = Vector2(rooms[i].position).distance_to(Vector2(rooms[j].position));
-                        if (dist < min_distance) {
-                            min_distance = dist;
-                            closest_unconnected = i;
-                            closest_connected = j;
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (closest_unconnected != -1 && closest_connected != -1) {
-            // Create doors for both rooms
-            auto& room1 = rooms[closest_unconnected];
-            auto& room2 = rooms[closest_connected];
-            
-            auto doors1 = find_valid_door_positions(room1);
-            auto doors2 = find_valid_door_positions(room2);
-            
-            if (!doors1.empty() && !doors2.empty()) {
-                room1.doors.push_back(doors1[0]);
-                room2.doors.push_back(doors2[0]);
-                room1.connected = true;
+        // Initialize navigation costs
+        for (int x = 0; x < bounds.size.x; x++) {
+            for (int y = 0; y < bounds.size.y; y++) {
+                int index = x + y * static_cast<int>(bounds.size.x);
+                navigation_grid[index] = Vector2i(x, y);
             }
         }
     }
-}
-
-std::vector<Vector2i> WorldSystem::find_valid_door_positions(const Room& room) {
-    std::vector<Vector2i> valid_positions;
-    
-    // Check all walls for valid door positions
-    // Top and bottom walls
-    for (int x = 1; x < room.size.x - 1; x++) {
-        valid_positions.push_back(Vector2i(room.position.x + x, room.position.y));
-        valid_positions.push_back(Vector2i(room.position.x + x, room.position.y + room.size.y - 1));
-    }
-    
-    // Left and right walls
-    for (int y = 1; y < room.size.y - 1; y++) {
-        valid_positions.push_back(Vector2i(room.position.x, room.position.y + y));
-        valid_positions.push_back(Vector2i(room.position.x + room.size.x - 1, room.position.y + y));
-    }
-    
-    // Shuffle the positions
-    std::shuffle(valid_positions.begin(), valid_positions.end(), rng);
-    return valid_positions;
-}
-
-void WorldSystem::register_placeable_objects() {
-    // Register default placeable objects
-    placeable_objects = {
-        {"res://scenes/objects/container.tscn", ObjectType::CONTAINER, 1.0f, true, true},
-        {"res://scenes/objects/workbench.tscn", ObjectType::WORKSTATION, 0.7f, true, true},
-        {"res://scenes/objects/crate.tscn", ObjectType::OBSTACLE, 0.8f, false, true},
-        {"res://scenes/objects/lamp.tscn", ObjectType::LIGHT_SOURCE, 0.5f, true, false},
-        {"res://scenes/objects/plant.tscn", ObjectType::DECORATION, 0.3f, false, false}
-    };
-}
-
-void WorldSystem::place_objects() {
-    if (rooms.empty() || placeable_objects.empty()) return;
-    
-    // Calculate weights for object selection
-    std::vector<float> weights;
-    float total_weight = 0;
-    for (const auto& obj : placeable_objects) {
-        total_weight += obj.spawn_weight;
-        weights.push_back(total_weight);
-    }
-    
-    // Place objects in each room
-    for (auto& room : rooms) {
-        int num_objects = static_cast<int>(room.size.x * room.size.y * object_density);
-        
-        for (int i = 0; i < num_objects; i++) {
-            // Select random object based on weights
-            float rand_val = Math::randf() * total_weight;
-            auto it = std::lower_bound(weights.begin(), weights.end(), rand_val);
-            size_t obj_index = std::distance(weights.begin(), it);
-            
-            if (obj_index < placeable_objects.size()) {
-                place_object_in_room(room, placeable_objects[obj_index]);
-            }
-        }
-    }
-}
-
-void WorldSystem::place_object_in_room(Room& room, const PlaceableObject& obj) {
-    for (int attempt = 0; attempt < max_placement_attempts; attempt++) {
-        Vector2i pos = find_random_floor_position(room);
-        
-        if (is_valid_object_position(room, pos, obj)) {
-            // Load and instance the object scene
-            Ref<PackedScene> scene = ResourceLoader::get_singleton()->load(obj.scene_path);
-            if (scene.is_valid()) {
-                Node* instance = scene->instantiate();
-                if (instance) {
-                    add_child(instance);
-                    Node2D* node_2d = Object::cast_to<Node2D>(instance);
-                    if (node_2d) {
-                        // Convert tilemap position to world position
-                        Vector2 world_pos = tile_map->map_to_local(pos);
-                        node_2d->set_position(world_pos);
-                        
-                        // Update room navigation data
-                        update_room_navigation(room, pos, obj.blocks_path);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void WorldSystem::place_npcs() {
-    if (rooms.empty() || npc_scene_path.is_empty()) return;
-    
-    Ref<PackedScene> npc_scene = ResourceLoader::get_singleton()->load(npc_scene_path);
-    if (!npc_scene.is_valid()) return;
-    
-    std::uniform_int_distribution<int> npc_count_dist(min_npcs_per_room, max_npcs_per_room);
-    
-    for (const auto& room : rooms) {
-        int num_npcs = npc_count_dist(rng);
-        
-        for (int i = 0; i < num_npcs; i++) {
-            Vector2i pos = find_random_floor_position(room);
-            
-            // Check if position is valid (not blocked)
-            if (std::find(room.occupied_positions.begin(), room.occupied_positions.end(), pos) 
-                == room.occupied_positions.end()) {
-                
-                Node* instance = npc_scene->instantiate();
-                if (instance) {
-                    add_child(instance);
-                    Node2D* npc = Object::cast_to<Node2D>(instance);
-                    if (npc) {
-                        // Convert tilemap position to world position
-                        Vector2 world_pos = tile_map->map_to_local(pos);
-                        npc->set_position(world_pos);
-                    }
-                }
-            }
-        }
-    }
-}
-
-Vector2i WorldSystem::find_random_floor_position(const Room& room) {
-    std::uniform_int_distribution<int> x_dist(1, room.size.x - 2);
-    std::uniform_int_distribution<int> y_dist(1, room.size.y - 2);
-    
-    return Vector2i(
-        room.position.x + x_dist(rng),
-        room.position.y + y_dist(rng)
-    );
-}
-
-bool WorldSystem::is_valid_object_position(const Room& room, const Vector2i& pos, const PlaceableObject& obj) {
-    // Check if position is already occupied
-    if (std::find(room.occupied_positions.begin(), room.occupied_positions.end(), pos) 
-        != room.occupied_positions.end()) {
-        return false;
-    }
-    
-    // Check wall requirement
-    if (obj.requires_wall && !is_near_wall(room, pos)) {
-        return false;
-    }
-    
-    // Check if position blocks any door
-    for (const auto& door : room.doors) {
-        if (pos == door || pos.distance_to(door) < 2) {
-            return false;
-        }
-    }
-    
-    return true;
-}
-
-bool WorldSystem::is_near_wall(const Room& room, const Vector2i& pos) {
-    return pos.x == room.position.x + 1 || 
-           pos.x == room.position.x + room.size.x - 2 ||
-           pos.y == room.position.y + 1 || 
-           pos.y == room.position.y + room.size.y - 2;
-}
-
-void WorldSystem::update_room_navigation(Room& room, const Vector2i& pos, bool blocks_path) {
-    if (blocks_path) {
-        room.occupied_positions.push_back(pos);
-    }
-}
-
-void WorldSystem::set_object_density(float density) {
-    object_density = Math::clamp(density, 0.0f, 1.0f);
-}
-
-void WorldSystem::set_npc_scene(const String& scene_path) {
-    npc_scene_path = scene_path;
-}
-
-void WorldSystem::set_npc_count_range(int min_count, int max_count) {
-    min_npcs_per_room = Math::max(0, min_count);
-    max_npcs_per_room = Math::max(min_npcs_per_room, max_count);
-}
-
-void WorldSystem::add_placeable_object(const String& scene_path, ObjectType type, float weight, bool wall_required, bool blocks_path) {
-    PlaceableObject obj{type, scene_path, weight, wall_required, blocks_path};
-    placeable_objects.push_back(obj);
 }
 
 void WorldSystem::clear_world() {
     if (tile_map) {
         tile_map->clear();
     }
-    rooms.clear();
+    placeable_objects.clear();
+    spawn_points.clear();
+}
+
+void WorldSystem::generate_world(const Dictionary& params) {
+    if (!tile_map) return;
+    
+    // Get generation parameters
+    int width = params.has("width") ? static_cast<int>(params["width"]) : 100;
+    int height = params.has("height") ? static_cast<int>(params["height"]) : 100;
+    float noise_scale = params.has("noise_scale") ? static_cast<float>(params["noise_scale"]) : 0.1f;
+    
+    // Use random seed if not provided
+    int world_seed = params.has("seed") ? static_cast<int>(params["seed"]) : UtilityFunctions::randi();
+    UtilityFunctions::seed(world_seed);
+    
+    // Generate terrain
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            float noise_value = UtilityFunctions::randf();
+            int tile_index = determine_tile_type(noise_value);
+            tile_map->set_cell(0, Vector2i(x, y), 0, Vector2i(tile_index, 0));
+        }
+    }
+    
+    // Place objects
+    place_objects();
+}
+
+int WorldSystem::determine_tile_type(float noise_value) const {
+    if (noise_value < 0.2f) return 0; // Water
+    if (noise_value < 0.4f) return 1; // Sand
+    if (noise_value < 0.7f) return 2; // Grass
+    if (noise_value < 0.9f) return 3; // Forest
+    return 4; // Mountain
+}
+
+void WorldSystem::place_objects() {
+    if (!tile_map) return;
+    
+    // Place each object at its designated position
+    for (const PlaceableObject& obj : placeable_objects) {
+        Vector2i tile_pos = get_tile_position(obj.position);
+        if (is_position_valid(obj.position)) {
+            // Place object marker on tilemap
+            tile_map->set_cell(1, tile_pos, 1, Vector2i(get_object_tile_index(obj.type), 0));
+        }
+    }
+}
+
+int WorldSystem::get_object_tile_index(const String& type) const {
+    if (type == "workbench") return 0;
+    if (type == "altar") return 1;
+    if (type == "library") return 2;
+    if (type == "laboratory") return 3;
+    if (type == "ritual_circle") return 4;
+    return 0;
+}
+
+Vector2i WorldSystem::get_tile_position(const Vector2& world_pos) const {
+    if (!tile_map) return Vector2i(0, 0);
+    return tile_map->local_to_map(world_pos);
+}
+
+Vector2 WorldSystem::get_world_position(const Vector2i& tile_pos) const {
+    if (!tile_map) return Vector2(0, 0);
+    return tile_map->map_to_local(tile_pos);
+}
+
+bool WorldSystem::is_position_valid(const Vector2& pos) const {
+    if (!tile_map) return false;
+    
+    Vector2i tile_pos = get_tile_position(pos);
+    return tile_map->get_cell_source_id(0, tile_pos) != -1;
+}
+
+Array WorldSystem::get_placeable_objects() const {
+    Array result;
+    for (const PlaceableObject& obj : placeable_objects) {
+        Dictionary dict;
+        dict["type"] = obj.type;
+        dict["position"] = obj.position;
+        dict["properties"] = obj.properties;
+        result.push_back(dict);
+    }
+    return result;
+}
+
+Vector2 WorldSystem::get_random_spawn_point() const {
+    if (spawn_points.empty()) {
+        return Vector2();
+    }
+    int index = UtilityFunctions::randi() % spawn_points.size();
+    return spawn_points[index];
 }
 
 void WorldSystem::set_seed(int p_seed) {

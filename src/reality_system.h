@@ -1,18 +1,14 @@
-#ifndef REALITY_SYSTEM_H
-#define REALITY_SYSTEM_H
+#pragma once
 
-#include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/variant/vector2.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/array.hpp>
-#include <godot_cpp/classes/node3d.hpp>
 #include <vector>
 #include <map>
-#include <string>
+#include "personality_system.h"
 
-namespace godot {
-
-// Forward declarations
-class PersonalityProfile;
+using namespace godot;
 
 // Reality distortion effects
 enum class DistortionEffect {
@@ -35,41 +31,42 @@ enum class InfluenceType {
 
 // Structure for tracking reality anomalies
 struct RealityAnomaly {
-    Vector3 position;
+    Vector2 position;
+    DistortionEffect effect;
     float intensity;
     float radius;
-    DistortionEffect effect;
-    Dictionary properties;
     bool is_active;
     float duration;
     float elapsed_time;
+    Dictionary properties;
 };
 
 // Structure for consciousness fields
 struct ConsciousnessField {
-    std::vector<PersonalityProfile*> affected_entities;
+    Vector2 origin;
     InfluenceType influence_type;
     float field_strength;
-    Vector3 origin;
     float radius;
     Dictionary influence_properties;
+    std::vector<PersonalityProfile*> affected_entities;
 };
 
 // Main reality system class
-class RealitySystem : public Node3D {
-    GDCLASS(RealitySystem, Node3D)
+class RealitySystem : public Node {
+    GDCLASS(RealitySystem, Node)
 
 private:
     // Reality state tracking
     std::vector<RealityAnomaly> active_anomalies;
     std::vector<ConsciousnessField> consciousness_fields;
+    std::vector<PersonalityProfile*> influenced_entities;
+    std::map<InfluenceType, float> influence_thresholds;
     float global_distortion_level;
     Dictionary reality_state;
     
-    // Influence tracking
-    std::map<InfluenceType, float> influence_thresholds;
-    std::vector<PersonalityProfile*> influenced_entities;
-    
+    Array reality_field;
+    static const int FIELD_SIZE = 32;
+
     // Internal methods
     void update_anomalies(float delta);
     void process_consciousness_fields(float delta);
@@ -89,20 +86,20 @@ public:
     void _physics_process(double delta) override;
     
     // Reality manipulation
-    void create_reality_anomaly(const Vector3& position, DistortionEffect effect, float intensity);
-    void remove_reality_anomaly(const Vector3& position);
-    bool is_position_distorted(const Vector3& position) const;
-    float get_distortion_intensity(const Vector3& position) const;
+    void create_reality_anomaly(const Vector2& position, DistortionEffect effect, float intensity);
+    void remove_reality_anomaly(const Vector2& position);
+    bool is_position_distorted(const Vector2& position) const;
+    float get_distortion_intensity(const Vector2& position) const;
     
     // Consciousness field management
-    void create_consciousness_field(const Vector3& origin, InfluenceType type, float strength);
+    void create_consciousness_field(const Vector2& origin, InfluenceType type, float strength);
     void update_consciousness_field(int field_id, const Dictionary& properties);
     void remove_consciousness_field(int field_id);
     
     // Entity influence
     void register_entity(PersonalityProfile* entity);
     void unregister_entity(PersonalityProfile* entity);
-    void apply_influence(PersonalityProfile* target, InfluenceType type, float strength);
+    void apply_influence(Node* target, InfluenceType type, float strength);
     
     // State queries
     Dictionary get_reality_state() const;
@@ -114,8 +111,9 @@ public:
     void set_influence_threshold(InfluenceType type, float threshold);
     float get_influence_threshold(InfluenceType type) const;
     void set_global_distortion(float level);
-};
 
-}
-
-#endif // REALITY_SYSTEM_H 
+    void update_reality_field(float delta);
+    void process_anomaly(float delta, Dictionary& anomaly);
+    Array get_reality_field() const;
+    void _ready() override;
+}; 

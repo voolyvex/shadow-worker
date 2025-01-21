@@ -1,20 +1,7 @@
-extends Node
+class_name TestConstants extends Node
 
-const DistortionEffect = {
-    RIPPLE = 0,
-    FRAGMENT = 1,
-    MERGE = 2,
-    DISSOLVE = 3,
-    CRYSTALLIZE = 4
-}
-
-const InfluenceType = {
-    EMOTIONAL = 0,
-    COGNITIVE = 1,
-    PERCEPTUAL = 2,
-    BEHAVIORAL = 3,
-    COLLECTIVE = 4
-}
+enum DistortionEffect { NONE, RIPPLE, FRAGMENT, MERGE, DISSOLVE, CRYSTALLIZE }
+enum InfluenceType { EMOTIONAL, COGNITIVE, PERCEPTUAL, BEHAVIORAL, COLLECTIVE }
 
 func _ready():
     pass 

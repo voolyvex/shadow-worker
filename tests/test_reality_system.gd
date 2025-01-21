@@ -94,12 +94,8 @@ func test_consciousness_field_creation():
     var radius = 50.0
     var influence_type = Constants.InfluenceType.EMOTIONAL
     
-    var success = reality_system.create_consciousness_field(position, radius, influence_type)
+    reality_system.create_consciousness_field(position, radius, influence_type)
     var fields = reality_system.get_consciousness_fields()
-    
-    if not success:
-        emit_signal("test_failed", test_name, "Failed to create consciousness field")
-        return
     
     if fields.size() != 1:
         emit_signal("test_failed", test_name, "Expected 1 field, got " + str(fields.size()))

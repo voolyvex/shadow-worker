@@ -1,6 +1,7 @@
 #include "reality_system.h"
 #include "personality_system.h"
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/core/class_db.hpp>
 
 using namespace godot;
 
@@ -46,6 +47,10 @@ void RealitySystem::_bind_methods() {
         &RealitySystem::get_influence_threshold);
     ClassDB::bind_method(D_METHOD("set_global_distortion", "level"), 
         &RealitySystem::set_global_distortion);
+
+    ClassDB::bind_method(D_METHOD("update_reality_field", "delta"), &RealitySystem::update_reality_field);
+    ClassDB::bind_method(D_METHOD("process_anomaly", "delta", "anomaly"), &RealitySystem::process_anomaly);
+    ClassDB::bind_method(D_METHOD("get_reality_field"), &RealitySystem::get_reality_field);
 }
 
 RealitySystem::RealitySystem() : global_distortion_level(0.0f) {
@@ -76,113 +81,59 @@ void RealitySystem::_physics_process(double delta) {
     // Handle physics-based reality distortions if needed
 }
 
-void RealitySystem::create_reality_anomaly(const Vector3& position, DistortionEffect effect, float intensity) {
+void RealitySystem::create_reality_anomaly(const Vector2& position, DistortionEffect effect, float intensity) {
     RealityAnomaly anomaly;
     anomaly.position = position;
     anomaly.effect = effect;
-    anomaly.intensity = Math::clamp(intensity, 0.0f, 1.0f);
-    anomaly.radius = 5.0f + (intensity * 10.0f); // Scale radius with intensity
+    anomaly.intensity = intensity;
+    anomaly.radius = 5.0f;
     anomaly.is_active = true;
-    anomaly.duration = 10.0f; // Default duration
+    anomaly.duration = 10.0f;
     anomaly.elapsed_time = 0.0f;
     
-    // Set effect-specific properties
-    Dictionary props;
-    switch (effect) {
-        case DistortionEffect::RIPPLE:
-            props["wave_speed"] = 2.0f;
-            props["wave_amplitude"] = intensity * 0.5f;
-            break;
-        case DistortionEffect::FRAGMENT:
-            props["fragment_size"] = 1.0f - intensity;
-            props["rotation_speed"] = intensity * 2.0f;
-            break;
-        case DistortionEffect::MERGE:
-            props["merge_speed"] = intensity;
-            props["blend_factor"] = 0.0f;
-            break;
-        case DistortionEffect::DISSOLVE:
-            props["dissolve_rate"] = intensity * 0.5f;
-            props["reform_rate"] = intensity * 0.3f;
-            break;
-        case DistortionEffect::CRYSTALLIZE:
-            props["clarity"] = intensity;
-            props["refraction"] = 1.0f + intensity;
-            break;
-        default:
-            break;
-    }
-    anomaly.properties = props;
-    
     active_anomalies.push_back(anomaly);
-    
-    // Update global distortion
-    global_distortion_level = Math::min(1.0f, global_distortion_level + (intensity * 0.2f));
+    global_distortion_level = Math::min(global_distortion_level + intensity * 0.1f, 1.0f);
 }
 
-void RealitySystem::remove_reality_anomaly(const Vector3& position) {
+void RealitySystem::remove_reality_anomaly(const Vector2& position) {
     for (auto it = active_anomalies.begin(); it != active_anomalies.end(); ++it) {
         if (it->position.distance_to(position) < 0.1f) {
-            global_distortion_level = Math::max(0.0f, global_distortion_level - (it->intensity * 0.2f));
+            global_distortion_level = Math::max(global_distortion_level - it->intensity * 0.1f, 0.0f);
             active_anomalies.erase(it);
             break;
         }
     }
 }
 
-bool RealitySystem::is_position_distorted(const Vector3& position) const {
+bool RealitySystem::is_position_distorted(const Vector2& position) const {
     for (const auto& anomaly : active_anomalies) {
-        if (anomaly.position.distance_to(position) <= anomaly.radius) {
+        if (anomaly.is_active && position.distance_to(anomaly.position) <= anomaly.radius) {
             return true;
         }
     }
     return false;
 }
 
-float RealitySystem::get_distortion_intensity(const Vector3& position) const {
-    float max_intensity = 0.0f;
+float RealitySystem::get_distortion_intensity(const Vector2& position) const {
+    float total_intensity = 0.0f;
     for (const auto& anomaly : active_anomalies) {
-        float distance = anomaly.position.distance_to(position);
-        if (distance <= anomaly.radius) {
-            float intensity = anomaly.intensity * (1.0f - (distance / anomaly.radius));
-            max_intensity = Math::max(max_intensity, intensity);
+        if (anomaly.is_active) {
+            float distance = position.distance_to(anomaly.position);
+            if (distance <= anomaly.radius) {
+                float falloff = 1.0f - (distance / anomaly.radius);
+                total_intensity += anomaly.intensity * falloff;
+            }
         }
     }
-    return max_intensity;
+    return total_intensity;
 }
 
-void RealitySystem::create_consciousness_field(const Vector3& origin, InfluenceType type, float strength) {
+void RealitySystem::create_consciousness_field(const Vector2& origin, InfluenceType type, float strength) {
     ConsciousnessField field;
     field.origin = origin;
     field.influence_type = type;
-    field.field_strength = Math::clamp(strength, 0.0f, 1.0f);
-    field.radius = 10.0f + (strength * 20.0f); // Scale radius with strength
-    
-    // Set influence properties based on type
-    Dictionary props;
-    switch (type) {
-        case InfluenceType::EMOTIONAL:
-            props["empathy_factor"] = strength;
-            props["emotional_resonance"] = true;
-            break;
-        case InfluenceType::COGNITIVE:
-            props["thought_sync"] = strength * 0.7f;
-            props["clarity_boost"] = strength * 0.5f;
-            break;
-        case InfluenceType::PERCEPTUAL:
-            props["reality_blend"] = strength;
-            props["perception_shift"] = true;
-            break;
-        case InfluenceType::BEHAVIORAL:
-            props["behavior_sync"] = strength * 0.8f;
-            props["pattern_influence"] = strength * 0.6f;
-            break;
-        case InfluenceType::COLLECTIVE:
-            props["group_resonance"] = strength;
-            props["consciousness_merge"] = strength > 0.7f;
-            break;
-    }
-    field.influence_properties = props;
+    field.field_strength = strength;
+    field.radius = 10.0f;
     
     consciousness_fields.push_back(field);
 }
@@ -212,34 +163,15 @@ void RealitySystem::unregister_entity(PersonalityProfile* entity) {
     }
 }
 
-void RealitySystem::apply_influence(PersonalityProfile* target, InfluenceType type, float strength) {
-    if (!target) return;
-    
-    float threshold = influence_thresholds[type];
-    if (strength < threshold) return;
-    
+void RealitySystem::apply_influence(Node* target, InfluenceType type, float strength) {
     Dictionary influence_event;
     influence_event["type"] = static_cast<int>(type);
     influence_event["strength"] = strength;
-    influence_event["source"] = "reality_system";
     
-    // Add type-specific effects
     switch (type) {
         case InfluenceType::EMOTIONAL:
-            influence_event["emotional_impact"] = strength * 0.8f;
-            influence_event["resonance_level"] = strength * 0.6f;
-            break;
-        case InfluenceType::COGNITIVE:
-            influence_event["thought_clarity"] = strength * 0.7f;
-            influence_event["insight_boost"] = strength > 0.8f;
-            break;
-        case InfluenceType::PERCEPTUAL:
-            influence_event["reality_shift"] = strength * 0.9f;
-            influence_event["perception_expand"] = strength > 0.6f;
-            break;
-        case InfluenceType::BEHAVIORAL:
-            influence_event["pattern_change"] = strength * 0.5f;
-            influence_event["adaptation_rate"] = strength * 0.4f;
+            influence_event["resonance"] = strength * 0.5f;
+            influence_event["empathy_field"] = strength > 0.5f;
             break;
         case InfluenceType::COLLECTIVE:
             influence_event["group_sync"] = strength * 0.8f;
@@ -247,7 +179,7 @@ void RealitySystem::apply_influence(PersonalityProfile* target, InfluenceType ty
             break;
     }
     
-    target->process_event(influence_event);
+    target->call("process_event", influence_event);
 }
 
 void RealitySystem::update_anomalies(float delta) {
@@ -257,20 +189,20 @@ void RealitySystem::update_anomalies(float delta) {
         // Update effect properties
         switch (it->effect) {
             case DistortionEffect::RIPPLE:
-                it->properties["wave_phase"] = Math::fmod(it->elapsed_time * it->properties["wave_speed"], Math_TAU);
+                it->properties["wave_phase"] = Math::fmod(it->elapsed_time * it->properties["wave_speed"].operator float(), static_cast<float>(Math_TAU));
                 break;
             case DistortionEffect::FRAGMENT:
-                it->properties["rotation"] = Math::fmod(it->elapsed_time * it->properties["rotation_speed"], Math_TAU);
+                it->properties["rotation"] = Math::fmod(it->elapsed_time * it->properties["rotation_speed"].operator float(), static_cast<float>(Math_TAU));
                 break;
             case DistortionEffect::MERGE:
-                it->properties["blend_factor"] = Math::min(1.0f, it->properties["blend_factor"] + 
-                    (delta * it->properties["merge_speed"]));
+                it->properties["blend_factor"] = Math::min<float>(1.0f, it->properties["blend_factor"].operator float() + 
+                    (delta * it->properties["merge_speed"].operator float()));
                 break;
             case DistortionEffect::DISSOLVE:
-                it->properties["dissolve_progress"] = Math::min(1.0f, it->elapsed_time * it->properties["dissolve_rate"]);
+                it->properties["dissolve_progress"] = Math::min<float>(1.0f, it->elapsed_time * it->properties["dissolve_rate"].operator float());
                 break;
             case DistortionEffect::CRYSTALLIZE:
-                it->properties["intensity"] = Math::min(1.0f, it->elapsed_time * it->properties["clarity"]);
+                it->properties["intensity"] = Math::min<float>(1.0f, it->elapsed_time * it->properties["clarity"].operator float());
                 break;
             default:
                 break;
@@ -278,7 +210,7 @@ void RealitySystem::update_anomalies(float delta) {
         
         // Remove expired anomalies
         if (it->elapsed_time >= it->duration) {
-            global_distortion_level = Math::max(0.0f, global_distortion_level - (it->intensity * 0.2f));
+            global_distortion_level = Math::max<float>(0.0f, global_distortion_level - (it->intensity * 0.2f));
             it = active_anomalies.erase(it);
         } else {
             ++it;
@@ -292,11 +224,11 @@ void RealitySystem::process_consciousness_fields(float delta) {
         switch (field.influence_type) {
             case InfluenceType::EMOTIONAL:
                 field.influence_properties["resonance_phase"] = Math::fmod(
-                    field.influence_properties["resonance_phase"] + delta, Math_TAU);
+                    field.influence_properties["resonance_phase"].operator float() + delta, static_cast<float>(Math_TAU));
                 break;
             case InfluenceType::COLLECTIVE:
-                field.influence_properties["sync_level"] = Math::min(1.0f,
-                    field.influence_properties["sync_level"] + (delta * 0.1f));
+                field.influence_properties["sync_level"] = Math::min<float>(1.0f,
+                    field.influence_properties["sync_level"].operator float() + (delta * 0.1f));
                 break;
             default:
                 break;
@@ -304,7 +236,7 @@ void RealitySystem::process_consciousness_fields(float delta) {
         
         // Apply field effects to entities
         for (auto* entity : influenced_entities) {
-            Vector3 entity_pos = entity->get_position();
+            Vector2 entity_pos = entity->get_position();
             float distance = field.origin.distance_to(entity_pos);
             
             if (distance <= field.radius) {
@@ -445,4 +377,46 @@ float RealitySystem::get_influence_threshold(InfluenceType type) const {
 
 void RealitySystem::set_global_distortion(float level) {
     global_distortion_level = Math::clamp(level, 0.0f, 1.0f);
+}
+
+void RealitySystem::update_reality_field(float delta) {
+    // Update each point in the reality field
+    for (int i = 0; i < reality_field.size(); i++) {
+        float current_value = static_cast<float>(reality_field[i]);
+        float fluctuation = UtilityFunctions::randf() * 0.2f - 0.1f;
+        current_value = Math::clamp(current_value + fluctuation * delta, 0.0f, 1.0f);
+        reality_field[i] = current_value;
+    }
+}
+
+void RealitySystem::process_anomaly(float delta, Dictionary& anomaly) {
+    if (!anomaly.has("intensity") || !anomaly.has("influence")) {
+        return;
+    }
+
+    float intensity = static_cast<float>(static_cast<double>(anomaly["intensity"]));
+    float influence = static_cast<float>(static_cast<double>(anomaly["influence"]));
+
+    // Calculate changes based on interdependence
+    float intensity_change = influence * 0.1f * delta;
+    float influence_change = intensity * 0.05f * delta;
+
+    // Update values with clamping
+    intensity = Math::clamp(intensity + intensity_change, 0.0f, 1.0f);
+    influence = Math::clamp(influence + influence_change, 0.0f, 1.0f);
+
+    // Store updated values
+    anomaly["intensity"] = intensity;
+    anomaly["influence"] = influence;
+}
+
+Array RealitySystem::get_reality_field() const {
+    return reality_field;
+}
+
+void RealitySystem::_ready() {
+    // Initialize reality field with random values
+    for (int i = 0; i < FIELD_SIZE; i++) {
+        reality_field.push_back(UtilityFunctions::randf());
+    }
 } 

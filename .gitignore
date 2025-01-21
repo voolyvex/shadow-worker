@@ -108,3 +108,10 @@ logs/
 .import/
 export.cfg
 export_presets.cfg
+
+# Object files
+*.obj
+*.os
+*.so
+*.dll
+*.dylib
