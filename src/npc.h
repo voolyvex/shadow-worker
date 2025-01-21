@@ -8,6 +8,7 @@
 #include <godot_cpp/core/class_db.hpp>
 #include "personality_system.h"
 #include <queue>
+#include <map>
 
 namespace godot {
 
@@ -37,6 +38,7 @@ private:
     PersonalityProfile* personality;
     float state_timer;
     float decision_cooldown;
+    std::map<NPCState, float> state_priorities;
     
     // Interaction properties
     bool is_interactable;
@@ -64,8 +66,25 @@ private:
     void make_decision();
     Vector2 get_random_patrol_point() const;
     void process_personality_influence();
-    float calculate_state_priority(NPCState state) const;
+    float calculate_context_priority(NPCState state, const Array& nearby_entities, const Vector2& current_location);
+    float calculate_emotional_priority(NPCState state, const Dictionary& emotional_state);
     void handle_event(const Dictionary& event);
+    
+    // State-specific handlers
+    void handle_idle_state(double delta);
+    void handle_patrol_state(double delta);
+    void handle_follow_state(double delta);
+    void handle_flee_state(double delta);
+    void handle_interact_state(double delta);
+    void handle_work_state(double delta);
+    
+    // Utility methods
+    Array get_nearby_entities() const;
+    bool is_work_hours() const;
+    bool is_near_workstation(const Vector2& location) const;
+    float get_distance_to_target() const;
+    Vector2 calculate_avoidance_vector() const;
+    bool has_line_of_sight(const Vector2& target) const;
 
 protected:
     static void _bind_methods();
