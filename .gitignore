@@ -34,3 +34,42 @@ desktop.ini
 # SCons files
 .sconsign.dblite
 build/
+
+# Ignore large art assets and raw resources
+art/audio/**/*.wav
+art/audio/**/*.mp3
+art/audio/**/*.ogg
+art/maps/**/*.zip
+art/maps/**/*.rar
+art/**/*.psd
+art/**/*.aseprite
+art/**/*.unitypackage
+art/**/*.pdf
+
+# Keep only processed/functional assets
+!art/sprites/**/*.png
+!art/templates/**/*.json
+!art/Texture/**/*.png
+
+# Ignore temporary and build files
+logs/
+*.log
+*.temp
+
+# Documentation files to keep
+!art/docs/readme.txt
+!art/docs/license.txt
+!art/TXT/readme.txt
+!art/TXT/license.txt
+
+# Ignore large binary files
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# Godot specific
+.import/
+export.cfg
+export_presets.cfg
