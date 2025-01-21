@@ -120,83 +120,206 @@ void NPC::_process(double delta) {
 }
 
 void NPC::_physics_process(double delta) {
+    if (!personality) return;
+
+    // Update timers
+    state_timer += delta;
+    cooldown_timer = std::max(0.0f, cooldown_timer - (float)delta);
+
+    // Process personality influence on behavior
+    process_personality_influence();
+
+    // Update current state
+    update_state(delta);
+
+    // Handle movement based on current state
     handle_movement(delta);
+
+    // Update animations
+    update_animation();
+}
+
+void NPC::process_personality_influence() {
+    if (!personality) return;
+
+    // Get current emotional state
+    auto emotional_state = personality->get_emotional_state();
+    
+    // Adjust behavior based on personality traits
+    float aggression = personality->get_trait("aggression");
+    float sociability = personality->get_trait("sociability");
+    float curiosity = personality->get_trait("curiosity");
+    
+    // Modify state priorities based on personality
+    state_priorities[NPCState::PATROL] = curiosity * 0.8f;
+    state_priorities[NPCState::INTERACT] = sociability * 1.2f;
+    state_priorities[NPCState::FLEE] = (1.0f - aggression) * 0.9f;
+    
+    // Apply emotional modifiers
+    if (emotional_state["stress"] > 0.7f) {
+        state_priorities[NPCState::FLEE] *= 1.5f;
+    }
+    if (emotional_state["joy"] > 0.6f) {
+        state_priorities[NPCState::INTERACT] *= 1.3f;
+    }
 }
 
 void NPC::update_state(double delta) {
-    state_timer -= delta;
-    decision_cooldown -= delta;
-    
-    // Update personality
-    personality->simulate_growth(delta);
-    
-    if (decision_cooldown <= 0) {
+    // Check if it's time to make a new decision
+    if (state_timer >= decision_cooldown) {
         make_decision();
-        decision_cooldown = 2.0f;
+        state_timer = 0.0f;
+    }
+
+    // Handle state-specific behavior
+    switch (current_state) {
+        case NPCState::IDLE:
+            handle_idle_state(delta);
+            break;
+        case NPCState::PATROL:
+            handle_patrol_state(delta);
+            break;
+        case NPCState::FOLLOW:
+            handle_follow_state(delta);
+            break;
+        case NPCState::FLEE:
+            handle_flee_state(delta);
+            break;
+        case NPCState::INTERACT:
+            handle_interact_state(delta);
+            break;
+        case NPCState::WORK:
+            handle_work_state(delta);
+            break;
     }
 }
 
 void NPC::make_decision() {
-    // Get current personality state
-    Dictionary state = personality->get_current_state();
-    float stress_level = state["stress_level"];
-    
-    // Calculate state priorities based on personality
-    NPCState best_state = current_state;
-    float highest_priority = -1;
-    
-    for (int i = 0; i < 6; i++) {
-        NPCState state = static_cast<NPCState>(i);
-        float priority = calculate_state_priority(state);
+    // Get current context
+    auto nearby_entities = get_nearby_entities();
+    auto current_location = get_global_position();
+    auto emotional_state = personality->get_emotional_state();
+
+    // Calculate priorities for each state
+    std::map<NPCState, float> priorities;
+    for (const auto& pair : state_priorities) {
+        float base_priority = pair.second;
+        float context_modifier = calculate_context_priority(pair.first, nearby_entities, current_location);
+        float emotional_modifier = calculate_emotional_priority(pair.first, emotional_state);
         
-        if (priority > highest_priority) {
-            highest_priority = priority;
-            best_state = state;
+        priorities[pair.first] = base_priority * context_modifier * emotional_modifier;
+    }
+
+    // Select highest priority state
+    NPCState best_state = NPCState::IDLE;
+    float highest_priority = 0.0f;
+    
+    for (const auto& pair : priorities) {
+        if (pair.second > highest_priority) {
+            highest_priority = pair.second;
+            best_state = pair.first;
         }
     }
-    
+
+    // Set new state if different from current
     if (best_state != current_state) {
         set_state(best_state);
     }
 }
 
-float NPC::calculate_state_priority(NPCState state) const {
-    Dictionary personality_state = personality->get_current_state();
-    float stress_level = personality_state["stress_level"];
-    float growth_potential = personality_state["growth_potential"];
-    
-    float priority = 0;
-    
+float NPC::calculate_context_priority(NPCState state, const Array& nearby_entities, const Vector2& current_location) {
+    float priority = 1.0f;
+
     switch (state) {
-        case NPCState::IDLE:
-            priority = 0.2f + (1.0f - personality->get_dsm_dimension("negative_affectivity")) * 0.3f;
-            break;
-            
         case NPCState::PATROL:
-            priority = personality->get_dsm_dimension("detachment") * 0.5f;
-            if (state_timer <= 0) priority += 0.3f;
+            // Higher priority when no interesting entities nearby
+            priority = nearby_entities.is_empty() ? 1.5f : 0.8f;
             break;
             
         case NPCState::FOLLOW:
-            if (is_interactable) {
-                priority = (1.0f - personality->get_dsm_dimension("detachment")) * 0.6f;
+            // Higher priority when player is nearby
+            for (int i = 0; i < nearby_entities.size(); i++) {
+                Node* entity = Object::cast_to<Node>(nearby_entities[i]);
+                if (entity && entity->is_in_group("player")) {
+                    priority = 1.8f;
+                    break;
+                }
             }
             break;
             
         case NPCState::FLEE:
-            if (is_interactable && stress_level > 0.7f) {
-                priority = 0.8f + personality->get_dsm_dimension("negative_affectivity") * 0.2f;
+            // Higher priority when threats are nearby
+            for (int i = 0; i < nearby_entities.size(); i++) {
+                Node* entity = Object::cast_to<Node>(nearby_entities[i]);
+                if (entity && entity->is_in_group("threat")) {
+                    priority = 2.0f;
+                    break;
+                }
             }
             break;
             
         case NPCState::INTERACT:
-            if (is_interactable) {
-                priority = (1.0f - personality->get_dsm_dimension("antagonism")) * 0.7f;
+            // Higher priority when interactable entities are nearby
+            for (int i = 0; i < nearby_entities.size(); i++) {
+                Node* entity = Object::cast_to<Node>(nearby_entities[i]);
+                if (entity && entity->is_in_group("interactable")) {
+                    priority = 1.6f;
+                    break;
+                }
             }
             break;
             
         case NPCState::WORK:
-            priority = growth_potential * 0.4f;
+            // Higher priority during work hours or near workstation
+            if (is_work_hours() || is_near_workstation(current_location)) {
+                priority = 1.7f;
+            }
+            break;
+            
+        default:
+            break;
+    }
+
+    return priority;
+}
+
+float NPC::calculate_emotional_priority(NPCState state, const Dictionary& emotional_state) {
+    float priority = 1.0f;
+    
+    // Get relevant emotional values
+    float stress = emotional_state["stress"];
+    float joy = emotional_state["joy"];
+    float fatigue = emotional_state["fatigue"];
+    
+    switch (state) {
+        case NPCState::IDLE:
+            // More likely to idle when fatigued
+            priority = 1.0f + (fatigue * 0.5f);
+            break;
+            
+        case NPCState::PATROL:
+            // Less likely to patrol when stressed or fatigued
+            priority = 1.0f - (stress * 0.3f) - (fatigue * 0.2f);
+            break;
+            
+        case NPCState::FOLLOW:
+            // More likely to follow when joyful
+            priority = 1.0f + (joy * 0.4f);
+            break;
+            
+        case NPCState::FLEE:
+            // Much more likely to flee when stressed
+            priority = 1.0f + (stress * 0.8f);
+            break;
+            
+        case NPCState::INTERACT:
+            // More likely to interact when joyful, less when stressed
+            priority = 1.0f + (joy * 0.5f) - (stress * 0.3f);
+            break;
+            
+        case NPCState::WORK:
+            // Less likely to work when fatigued or stressed
+            priority = 1.0f - (fatigue * 0.4f) - (stress * 0.2f);
             break;
     }
     
@@ -490,4 +613,197 @@ void NPC::set_speed(float p_speed) {
 
 float NPC::get_speed() const {
     return speed;
+}
+
+void NPC::handle_idle_state(double delta) {
+    // In idle state, the NPC should occasionally look around
+    if (state_timer > 3.0f) {
+        // Random rotation to simulate looking around
+        sprite->set_flip_h(Math::randf() > 0.5f);
+        state_timer = 0.0f;
+    }
+    
+    // Slow down any existing movement
+    velocity = velocity.lerp(Vector2(), delta * 2.0f);
+}
+
+void NPC::handle_patrol_state(double delta) {
+    if (get_distance_to_target() < 10.0f || state_timer > 10.0f) {
+        // Get new patrol point when close to target or timeout
+        target_position = get_random_patrol_point();
+        state_timer = 0.0f;
+    }
+    
+    // Calculate path to target
+    Vector2 direction = (target_position - get_global_position()).normalized();
+    Vector2 desired_velocity = direction * speed;
+    
+    // Apply steering behavior
+    Vector2 avoidance = calculate_avoidance_vector();
+    desired_velocity += avoidance;
+    
+    // Update velocity with smoothing
+    velocity = velocity.lerp(desired_velocity, delta * 3.0f);
+}
+
+void NPC::handle_follow_state(double delta) {
+    Array nearby = get_nearby_entities();
+    Node* target = nullptr;
+    
+    // Find closest player or interesting entity
+    float closest_dist = 1000000.0f;
+    for (int i = 0; i < nearby.size(); i++) {
+        Node* entity = Object::cast_to<Node>(nearby[i]);
+        if (entity && (entity->is_in_group("player") || entity->is_in_group("interesting"))) {
+            float dist = get_global_position().distance_to(Object::cast_to<Node2D>(entity)->get_global_position());
+            if (dist < closest_dist) {
+                closest_dist = dist;
+                target = entity;
+            }
+        }
+    }
+    
+    if (target) {
+        // Update target position
+        target_position = Object::cast_to<Node2D>(target)->get_global_position();
+        
+        // Calculate direction while maintaining some distance
+        Vector2 direction = (target_position - get_global_position()).normalized();
+        float target_distance = get_global_position().distance_to(target_position);
+        
+        if (target_distance > interaction_radius * 1.5f) {
+            // Move closer if too far
+            velocity = velocity.lerp(direction * speed, delta * 3.0f);
+        } else if (target_distance < interaction_radius * 0.8f) {
+            // Back up if too close
+            velocity = velocity.lerp(-direction * speed * 0.5f, delta * 3.0f);
+        } else {
+            // Maintain distance
+            velocity = velocity.lerp(Vector2(), delta * 3.0f);
+        }
+    } else {
+        // No target found, return to idle
+        set_state(NPCState::IDLE);
+    }
+}
+
+void NPC::handle_flee_state(double delta) {
+    Array nearby = get_nearby_entities();
+    Vector2 flee_direction = Vector2();
+    
+    // Calculate flee direction away from threats
+    for (int i = 0; i < nearby.size(); i++) {
+        Node* entity = Object::cast_to<Node>(nearby[i]);
+        if (entity && entity->is_in_group("threat")) {
+            Vector2 threat_pos = Object::cast_to<Node2D>(entity)->get_global_position();
+            Vector2 away_dir = (get_global_position() - threat_pos).normalized();
+            flee_direction += away_dir;
+        }
+    }
+    
+    if (flee_direction != Vector2()) {
+        // Normalize and apply speed
+        flee_direction = flee_direction.normalized();
+        Vector2 desired_velocity = flee_direction * speed * 1.5f; // Flee faster than normal speed
+        
+        // Add some randomness to make the movement more panicked
+        desired_velocity += Vector2(Math::randf() * 0.2f - 0.1f, Math::randf() * 0.2f - 0.1f) * speed;
+        
+        // Update velocity with quick response
+        velocity = velocity.lerp(desired_velocity, delta * 5.0f);
+    } else {
+        // No threats nearby, calm down
+        set_state(NPCState::IDLE);
+    }
+}
+
+void NPC::handle_interact_state(double delta) {
+    if (!is_interactable) {
+        set_state(NPCState::IDLE);
+        return;
+    }
+    
+    // Face the interaction target
+    sprite->set_flip_h(target_position.x < get_global_position().x);
+    
+    // Stay relatively still during interaction
+    velocity = velocity.lerp(Vector2(), delta * 4.0f);
+    
+    // Process dialogue if any
+    if (!dialogue_queue.empty() && state_timer > 2.0f) {
+        display_dialogue(dialogue_queue.front());
+        dialogue_queue.pop();
+        state_timer = 0.0f;
+    }
+}
+
+void NPC::handle_work_state(double delta) {
+    if (!is_work_hours() && !is_near_workstation(get_global_position())) {
+        set_state(NPCState::IDLE);
+        return;
+    }
+    
+    // Move to workstation if not there
+    if (!is_near_workstation(get_global_position())) {
+        Vector2 workstation_pos = get_nearest_workstation();
+        Vector2 direction = (workstation_pos - get_global_position()).normalized();
+        velocity = velocity.lerp(direction * speed * 0.7f, delta * 2.0f);
+    } else {
+        // Perform work animations/actions
+        velocity = velocity.lerp(Vector2(), delta * 3.0f);
+        // TODO: Implement work animations
+    }
+}
+
+Array NPC::get_nearby_entities() const {
+    Array nearby;
+    if (detection_area) {
+        nearby = detection_area->get_overlapping_bodies();
+    }
+    return nearby;
+}
+
+bool NPC::is_work_hours() const {
+    // TODO: Implement actual time system
+    return true; // Temporary always true
+}
+
+bool NPC::is_near_workstation(const Vector2& location) const {
+    // TODO: Implement actual workstation detection
+    return false; // Temporary always false
+}
+
+float NPC::get_distance_to_target() const {
+    return get_global_position().distance_to(target_position);
+}
+
+Vector2 NPC::calculate_avoidance_vector() const {
+    Vector2 avoidance;
+    Array nearby = get_nearby_entities();
+    
+    for (int i = 0; i < nearby.size(); i++) {
+        Node* entity = Object::cast_to<Node>(nearby[i]);
+        if (entity && entity != this) {
+            Vector2 entity_pos = Object::cast_to<Node2D>(entity)->get_global_position();
+            Vector2 to_entity = entity_pos - get_global_position();
+            float distance = to_entity.length();
+            
+            if (distance < interaction_radius) {
+                // Add avoidance force inversely proportional to distance
+                avoidance -= to_entity.normalized() * (interaction_radius - distance) / interaction_radius;
+            }
+        }
+    }
+    
+    return avoidance.normalized() * speed * 0.5f;
+}
+
+bool NPC::has_line_of_sight(const Vector2& target) const {
+    // TODO: Implement actual line of sight checking with raycasts
+    return true; // Temporary always true
+}
+
+Vector2 NPC::get_nearest_workstation() const {
+    // TODO: Implement actual workstation finding
+    return home_position; // Temporary return home position
 } 
