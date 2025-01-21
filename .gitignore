@@ -35,26 +35,61 @@ desktop.ini
 .sconsign.dblite
 build/
 
-# Ignore large art assets and raw resources
+# Art assets
+# Ignore raw and large art assets
 art/audio/**/*.wav
 art/audio/**/*.mp3
 art/audio/**/*.ogg
+art/audio/**/*.zip
+art/audio/**/*.rar
+
+# Ignore raw map files
 art/maps/**/*.zip
 art/maps/**/*.rar
+art/maps/**/*.psd
+art/maps/**/*.aseprite
+
+# Ignore source art files
 art/**/*.psd
 art/**/*.aseprite
 art/**/*.unitypackage
-art/**/*.pdf
+art/**/*.blend
+art/**/*.fbx
+art/**/*.zip
+art/**/*.rar
+art/**/*.7z
+art/**/*.tar
+art/**/*.gz
 
-# Keep only processed/functional assets
-!art/sprites/**/*.png
+# Keep specific art directories that contain game-ready assets
 !art/templates/**/*.json
+!art/sprites/**/*.png
 !art/Texture/**/*.png
+!art/maps/**/*.json
+!art/maps/**/*.tscn
+
+# Documentation
+!art/docs/readme.txt
+!art/docs/license.txt
+!art/docs/changelog.txt
+
+# Temporary and build files
+*.temp
+*.tmp
+*.bak
+build/
+temp/
+logs/
+
+# IDE and system files
+.vscode/
+.idea/
+*.swp
+*~
 
 # Ignore temporary and build files
 logs/
 *.log
-*.temp
 
 # Documentation files to keep
 !art/docs/readme.txt
