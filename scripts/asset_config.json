@@ -1,0 +1,296 @@
+{
+    "project": "shadow-worker",
+    "version": "1.0.0",
+    "settings": {
+        "createBackup": true,
+        "validateContent": true,
+        "removeSourceArchives": true,
+        "chunkLoading": {
+            "enabled": true,
+            "chunkSize": 32,
+            "maxLoadedChunks": 9,
+            "unloadDistance": 3
+        },
+        "resourcePooling": {
+            "enabled": true,
+            "maxPoolSize": 100,
+            "pooledTypes": ["props", "effects", "npcs"]
+        },
+        "templateScaling": {
+            "enabled": true,
+            "defaultMode": "PixelPerfect",
+            "modes": {
+                "PixelPerfect": {
+                    "filter": "nearest",
+                    "mipmap": false
+                },
+                "Smooth": {
+                    "filter": "bilinear",
+                    "mipmap": true
+                },
+                "Detailed": {
+                    "filter": "trilinear",
+                    "mipmap": true,
+                    "anisotropic": 4
+                }
+            },
+            "sizes": {
+                "tiny": [4, 4],
+                "small": [6, 6],
+                "medium": [8, 8],
+                "large": [10, 10],
+                "huge": [12, 12],
+                "boss": [16, 16]
+            }
+        }
+    },
+    "tasks": [
+        {
+            "type": "extract",
+            "description": "Extract map pack",
+            "source": "art/Dark Academia Map Pack.zip",
+            "destination": "art/maps/tilesets/indoor",
+            "assetType": "Maps",
+            "removeSource": true,
+            "validateContent": true,
+            "validation": {
+                "tileSize": 32,
+                "requiredLayers": ["ground", "walls", "decoration"]
+            }
+        },
+        {
+            "type": "extract",
+            "description": "Extract fairy avatars",
+            "source": "art/free-fairy-avatar-icons-32x32-pixel-art.zip",
+            "destination": "art/sprites/characters/fairy",
+            "assetType": "Sprites",
+            "removeSource": true,
+            "validateContent": true,
+            "validation": {
+                "dimensions": [32, 32],
+                "format": "RGBA"
+            }
+        },
+        {
+            "type": "extract",
+            "description": "Extract demon avatars",
+            "source": "art/free-demon-avatar-game-icons.zip",
+            "destination": "art/sprites/characters/demon",
+            "assetType": "Sprites",
+            "removeSource": true,
+            "validateContent": true,
+            "validation": {
+                "dimensions": [32, 32],
+                "format": "RGBA"
+            }
+        },
+        {
+            "type": "extract",
+            "description": "Extract audio pack",
+            "source": "art/Super Dialogue Audio Pack v1.zip",
+            "destination": "art/audio/dialogue",
+            "assetType": "Audio",
+            "removeSource": true,
+            "validateContent": true,
+            "validation": {
+                "format": "WAV",
+                "maxDuration": 10
+            }
+        },
+        {
+            "type": "move",
+            "description": "Organize environment sprites",
+            "source": "art/*.png",
+            "destination": "art/sprites/environment/props",
+            "assetType": "Sprites",
+            "createDirectory": true,
+            "backup": true,
+            "validation": {
+                "dimensions": [32, 32],
+                "format": "RGBA"
+            }
+        },
+        {
+            "type": "move",
+            "description": "Move documentation",
+            "source": "art/*.txt",
+            "destination": "art/docs/specifications",
+            "assetType": "Docs",
+            "createDirectory": true,
+            "backup": true
+        }
+    ],
+    "templates": {
+        "rooms": {
+            "types": ["combat", "treasure", "shop", "boss"],
+            "sizes": {
+                "small": [6, 6],
+                "medium": [8, 8],
+                "large": [10, 10],
+                "boss": [12, 12]
+            },
+            "validation": {
+                "requiredProperties": ["type", "difficulty", "connections", "spawns"],
+                "minConnections": 1,
+                "maxConnections": 4,
+                "doorRules": {
+                    "minSpacing": 2,
+                    "centerTolerance": 0.2,
+                    "requiredClearance": 1
+                }
+            },
+            "scaling": {
+                "preserveFeatures": ["doors", "spawns", "obstacles"],
+                "adjustDifficulty": true,
+                "maintainSpacing": true
+            }
+        },
+        "outdoor": {
+            "biomes": ["forest", "ruins", "caves"],
+            "chunkSize": 32,
+            "features": {
+                "minPerChunk": 3,
+                "maxPerChunk": 8,
+                "spacing": {
+                    "min": 2,
+                    "optimal": 4
+                }
+            },
+            "transitions": {
+                "types": ["smooth", "sharp", "gradual"],
+                "blending": {
+                    "steps": 4,
+                    "noiseScale": 0.5,
+                    "heightBlend": true
+                }
+            },
+            "generation": {
+                "heightmap": {
+                    "octaves": 4,
+                    "persistence": 0.5,
+                    "scale": 50.0
+                },
+                "vegetation": {
+                    "density": 0.3,
+                    "variationScale": 0.8
+                },
+                "features": {
+                    "clustering": 0.7,
+                    "alignToHeight": true
+                }
+            }
+        },
+        "integration": {
+            "doorAlignment": {
+                "snapToGrid": true,
+                "allowRotation": true,
+                "matchHeights": true
+            },
+            "transitions": {
+                "minWidth": 2,
+                "maxWidth": 4,
+                "heightMatching": "smooth",
+                "textureBlending": true
+            },
+            "optimization": {
+                "mergeSimilarTiles": true,
+                "reusePropInstances": true,
+                "batchStaticElements": true
+            }
+        }
+    },
+    "validation": {
+        "requiredDirectories": [
+            "art/sprites/characters",
+            "art/sprites/environment/indoor",
+            "art/sprites/environment/outdoor",
+            "art/sprites/environment/props",
+            "art/sprites/effects/particles",
+            "art/sprites/effects/weather",
+            "art/sprites/effects/lighting",
+            "art/sprites/ui",
+            "art/audio/music/ambient",
+            "art/audio/music/combat",
+            "art/audio/music/boss",
+            "art/audio/sfx/environment",
+            "art/audio/sfx/interaction",
+            "art/audio/sfx/combat",
+            "art/audio/dialogue",
+            "art/audio/ambient/indoor",
+            "art/audio/ambient/outdoor",
+            "art/audio/ambient/weather",
+            "art/maps/templates/rooms",
+            "art/maps/templates/corridors",
+            "art/maps/templates/outdoor",
+            "art/maps/tilesets/indoor",
+            "art/maps/tilesets/outdoor",
+            "art/maps/tilesets/props",
+            "art/maps/backgrounds/indoor",
+            "art/maps/backgrounds/outdoor",
+            "art/templates/rooms/combat",
+            "art/templates/rooms/treasure",
+            "art/templates/rooms/shop",
+            "art/templates/rooms/boss",
+            "art/templates/outdoor/biomes",
+            "art/templates/outdoor/features",
+            "art/templates/outdoor/transitions"
+        ],
+        "maxTotalSizeMB": {
+            "Sprites": 500,
+            "Audio": 1000,
+            "Maps": 250,
+            "Templates": 50,
+            "Docs": 50
+        }
+    },
+    "optimization": {
+        "sprites": {
+            "maxTextureSize": 2048,
+            "maxAtlasSize": 4096,
+            "compression": "lossless",
+            "mipMapping": true,
+            "atlasing": {
+                "enabled": true,
+                "padding": 1,
+                "powerOfTwo": true,
+                "maxSize": 2048
+            },
+            "batching": {
+                "enabled": true,
+                "maxBatchSize": 1000,
+                "dynamicBatching": true
+            }
+        },
+        "audio": {
+            "streamLargeFiles": true,
+            "streamThresholdMB": 10,
+            "maxSimultaneousStreams": 8,
+            "spatialAudio": {
+                "enabled": true,
+                "maxDistance": 1000,
+                "rolloffFactor": 1.0
+            }
+        },
+        "chunks": {
+            "preloadRadius": 1,
+            "unloadDelay": 5,
+            "maxConcurrentLoads": 2,
+            "threading": {
+                "enabled": true,
+                "maxThreads": 4,
+                "priorityQueue": true
+            }
+        },
+        "rendering": {
+            "occlusionCulling": true,
+            "frustumCulling": true,
+            "instancedRendering": true,
+            "dynamicBatching": true,
+            "lightmapping": {
+                "enabled": true,
+                "resolution": 1024,
+                "quality": "high"
+            }
+        }
+    }
+} 

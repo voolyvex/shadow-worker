@@ -1,0 +1,12 @@
+[2025-01-20 17:06:54] [Error] Template validation failed: Room size exceeds maximum: 
+[2025-01-20 17:11:35] [Error] Room size exceeds maximum: 8x8 > 6x6
+[2025-01-20 17:11:35] [Error] Template incompatible: Invalid target size: small
+[2025-01-20 17:11:35] [Error] Failed to scale template: Exception setting "properties": "The property 'properties' cannot be found on this object. Verify that the property exists and can be set."
+[2025-01-20 17:11:35] [Error] Failed to scale template: Exception setting "properties": "The property 'properties' cannot be found on this object. Verify that the property exists and can be set."
+[2025-01-20 17:11:35] [Error] Failed to scale template: Exception setting "properties": "The property 'properties' cannot be found on this object. Verify that the property exists and can be set."
+[2025-01-20 17:11:35] [Error] Failed to scale template: Exception setting "properties": "The property 'properties' cannot be found on this object. Verify that the property exists and can be set."
+[2025-01-20 17:12:20] [Error] Room size exceeds maximum: 8x8 > 6x6
+[2025-01-20 17:12:20] [Error] Template incompatible: Invalid target size: small
+[2025-01-20 17:12:20] [Error] Failed to create template transition: Cannot process argument transformation on parameter 'SourceTiles'. Cannot convert value "@{walls=System.Object[]; obstacles=System.Object[]}" to type "System.Collections.Hashtable". Error: "Cannot convert the "@{walls=System.Object[]; obstacles=System.Object[]}" value of type "System.Management.Automation.PSCustomObject" to type "System.Collections.Hashtable"."
+[2025-01-20 17:13:16] [Error] Room size exceeds maximum: 8x8 > 6x6
+[2025-01-20 17:13:16] [Error] Template incompatible: Invalid target size: small
