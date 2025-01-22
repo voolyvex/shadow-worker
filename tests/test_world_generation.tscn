@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://tests/test_world_generation.gd" id="1_test"]
+[ext_resource type="Script" path="res://scripts/world_system.gd" id="2_world"]
+[ext_resource type="TileSet" uid="uid://bc3fsh3mj5nyq" path="res://resources/tileset.tres" id="3_tileset"]
+
+[node name="TestWorldGeneration" type="Node2D"]
+script = ExtResource("1_test")
+
+[node name="WorldSystem" type="Node2D" parent="."]
+script = ExtResource("2_world")
+
+[node name="TileMap" type="TileMap" parent="WorldSystem"]
+tile_set = ExtResource("3_tileset")
+format = 2
+layer_0/name = "Ground"
+layer_1/name = "Walls"
+layer_1/enabled = true
+layer_1/modulate = Color(1, 1, 1, 1)
+layer_1/y_sort_enabled = false
+layer_1/y_sort_origin = 0
+layer_1/z_index = 0
+layer_1/tile_data = PackedInt32Array() 

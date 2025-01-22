@@ -1,126 +1,140 @@
 extends CharacterBody2D
 
-signal interaction_started(npc)
-signal interaction_ended(npc)
+enum NPCState { IDLE, PATROL, INTERACT }
 
-# Personality and behavior configuration
-@export var personality_type: String = "HELPER"  # Enneagram type
 @export var base_speed: float = 100.0
 @export var patrol_radius: float = 200.0
-@export var interaction_radius: float = 50.0
+@export var idle_time_range: Vector2 = Vector2(2.0, 5.0)
+@export_enum("HELPER", "MERCHANT", "SAGE", "TRICKSTER") var personality_type: String = "HELPER"
 
-# Internal state
-var npc_controller = null  # C++ NPC controller
-var dialogue_text = "Hello!"
-var is_interacting = false
-var debug_enabled = false
+var current_state: NPCState = NPCState.IDLE
+var start_position: Vector2
+var target_position: Vector2
+var idle_timer: float = 0.0
+var current_idle_duration: float = 0.0
+var is_interacting: bool = false
+var dialogue_text: String = ""
 
-# Node references
-@onready var dialogue_display = $DialogueDisplay
-@onready var detection_area = $DetectionArea
-@onready var sprite = $AnimatedSprite2D
-@onready var debug_label = $DebugLabel
+var dialogue_options = {
+	"HELPER": [
+		"Need any help? I know these halls well!",
+		"Be careful of the shadows ahead...",
+		"I can show you the safest paths if you'd like."
+	],
+	"MERCHANT": [
+		"Got some rare items for sale, if you're interested!",
+		"Everything has a price, friend...",
+		"I've traveled far to bring these wares."
+	],
+	"SAGE": [
+		"The ancient texts speak of great power hidden here...",
+		"Knowledge is the key to survival in these depths.",
+		"Seek wisdom, and you shall find your path."
+	],
+	"TRICKSTER": [
+		"Hehe, watch your step! Or don't, could be fun!",
+		"Want to hear a secret? Maybe it's true, maybe not!",
+		"Things aren't always what they seem around here..."
+	]
+}
 
-func _ready():
-	# Initialize C++ controller
-	npc_controller = NPC.new()
-	add_child(npc_controller)
-	
-	# Configure controller
-	npc_controller.set_speed(base_speed)
-	npc_controller.set_patrol_radius(patrol_radius)
-	npc_controller.set_interaction_radius(interaction_radius)
-	npc_controller.initialize_personality(personality_type)
-	
-	# Setup initial state
-	dialogue_display.text = ""
+@onready var dialogue_label: Label = $DialogueLabel
+@onready var debug_label: Label = $DebugLabel
+@onready var sprite: Sprite2D = $Sprite2D
+
+func _ready() -> void:
+	start_position = position
+	target_position = start_position
+	dialogue_label.text = ""
+	debug_label.text = personality_type
 	add_to_group("interactable")
-	
-	# Connect signals
-	detection_area.body_entered.connect(_on_body_entered)
-	detection_area.body_exited.connect(_on_body_exited)
-	
-	# Initialize debug display
-	setup_debug_display()
+	_set_random_dialogue()
+	_enter_idle_state()
 
-func _process(delta):
-	if npc_controller:
-		# Update debug info if enabled
-		if debug_enabled:
-			update_debug_display()
-
-func _physics_process(delta):
-	if npc_controller:
-		# Apply velocity from C++ controller
-		velocity = npc_controller.get_velocity()
-		move_and_slide()
+func _physics_process(delta: float) -> void:
+	if is_interacting:
+		return
 		
-		# Update sprite direction
-		if velocity.x != 0:
-			sprite.flip_h = velocity.x < 0
+	match current_state:
+		NPCState.IDLE:
+			_process_idle_state(delta)
+		NPCState.PATROL:
+			_process_patrol_state(delta)
+		NPCState.INTERACT:
+			_process_interact_state(delta)
 
-func start_interaction():
-	if not is_interacting and npc_controller:
-		is_interacting = true
-		npc_controller.on_interaction_start()
-		dialogue_display.text = dialogue_text
-		interaction_started.emit(self)
+func _process_idle_state(delta: float) -> void:
+	idle_timer += delta
+	if idle_timer >= current_idle_duration:
+		_enter_patrol_state()
 
-func end_interaction():
-	if is_interacting and npc_controller:
-		is_interacting = false
-		npc_controller.on_interaction_end()
-		dialogue_display.text = ""
-		interaction_ended.emit(self)
+func _process_patrol_state(delta: float) -> void:
+	var direction = target_position - position
+	
+	if direction.length() < 5:
+		_enter_idle_state()
+	else:
+		direction = direction.normalized()
+		velocity = direction * base_speed
+		move_and_slide()
+		_update_sprite_direction(direction)
 
-func set_dialogue(text: String):
+func _process_interact_state(_delta: float) -> void:
+	# Handle interaction-specific behavior
+	pass
+
+func _enter_idle_state() -> void:
+	current_state = NPCState.IDLE
+	velocity = Vector2.ZERO
+	idle_timer = 0.0
+	current_idle_duration = randf_range(idle_time_range.x, idle_time_range.y)
+
+func _enter_patrol_state() -> void:
+	current_state = NPCState.PATROL
+	var angle = randf() * 2 * PI
+	var distance = randf() * patrol_radius
+	target_position = start_position + Vector2(cos(angle), sin(angle)) * distance
+
+func _update_sprite_direction(direction: Vector2) -> void:
+	if sprite and direction.x != 0:
+		sprite.flip_h = direction.x < 0
+
+func start_interaction() -> void:
+	is_interacting = true
+	current_state = NPCState.INTERACT
+	_set_random_dialogue()
+	dialogue_label.text = dialogue_text
+	debug_label.hide()
+
+func end_interaction() -> void:
+	is_interacting = false
+	current_state = NPCState.IDLE
+	dialogue_label.text = ""
+	debug_label.show()
+	debug_label.text = personality_type
+	_enter_idle_state()
+
+func _set_random_dialogue() -> void:
+	var options = dialogue_options[personality_type]
+	dialogue_text = options[randi() % options.size()]
+
+func set_dialogue(text: String) -> void:
 	dialogue_text = text
 	if is_interacting:
-		dialogue_display.text = dialogue_text
-		if npc_controller:
-			npc_controller.queue_dialogue(text)
+		dialogue_label.text = dialogue_text
 
-func _on_body_entered(body: Node2D) -> void:
-	if body.is_in_group("player"):
-		if npc_controller:
-			npc_controller.on_player_entered(body)
-		interaction_started.emit(self)
-		update_debug_display()
+func set_personality(type: String) -> void:
+	if type in dialogue_options:
+		personality_type = type
+		_set_random_dialogue()
+		if not is_interacting:
+			debug_label.text = type
 
-func _on_body_exited(body: Node2D) -> void:
-	if body.is_in_group("player"):
-		if npc_controller:
-			npc_controller.on_player_exited(body)
-		interaction_ended.emit(self)
-		update_debug_display()
+# Signal handlers for area detection (can be used for player proximity)
+func _on_detection_area_entered(area: Area2D) -> void:
+	if area.is_in_group("player"):
+		debug_label.show()
 
-func setup_debug_display() -> void:
-	if not debug_label:
-		var label = Label.new()
-		label.name = "DebugLabel"
-		label.position = Vector2(0, -40)
-		add_child(label)
-		debug_label = label
-	debug_label.visible = debug_enabled
-
-func update_debug_display() -> void:
-	if debug_enabled and debug_label and npc_controller:
-		var state = npc_controller.get_state()
-		var personality = npc_controller.get_personality_state()
-		var text = "State: %s\n" % state
-		text += "Personality: %s\n" % personality
-		text += "Interaction: %s" % ["Active" if is_interacting else "Inactive"]
-		debug_label.text = text
-
-func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("toggle_debug"):
-		debug_enabled = !debug_enabled
-		debug_label.visible = debug_enabled
-		update_debug_display()
-
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_PREDELETE:
-		# Clean up C++ controller
-		if npc_controller:
-			npc_controller.queue_free()
-			npc_controller = null
+func _on_detection_area_exited(area: Area2D) -> void:
+	if area.is_in_group("player"):
+		debug_label.hide()

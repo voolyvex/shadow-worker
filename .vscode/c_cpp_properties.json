@@ -4,8 +4,9 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/src/**",
-                "C:/Godot/godot-cpp/include/**",
-                "C:/Godot/godot-cpp/gen/include/**"
+                "${workspaceFolder}/godot-cpp/include/**",
+                "${workspaceFolder}/godot-cpp/gen/include/**",
+                "${workspaceFolder}/godot-cpp/gdextension/**"
             ],
             "defines": [],
             "windowsSdkVersion": "10.1.22621.1",

@@ -1,0 +1,38 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/world_system.gd" id="1_world"]
+[ext_resource type="TileSet" path="res://resources/tileset.tres" id="2_tileset"]
+
+[node name="TestWorld" type="Node2D"]
+
+[node name="WorldSystem" type="Node2D" parent="."]
+script = ExtResource("1_world")
+room_size = Vector2i(8, 8)
+room_count = 3
+object_density = 0.2
+
+[node name="TileMap" type="TileMap" parent="WorldSystem"]
+tile_set = ExtResource("2_tileset")
+format = 2
+layer_0/name = "Ground"
+layer_1/name = "Walls"
+layer_1/enabled = true
+layer_1/modulate = Color(1, 1, 1, 1)
+layer_1/y_sort_enabled = false
+layer_1/y_sort_origin = 0
+layer_1/z_index = 0
+layer_1/tile_data = PackedInt32Array()
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(320, 180)
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="GenerateButton" type="Button" parent="UI"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 140.0
+offset_bottom = 51.0
+text = "Generate World"
+
+[connection signal="pressed" from="UI/GenerateButton" to="WorldSystem" method="generate_world"] 

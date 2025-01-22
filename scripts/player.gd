@@ -1,65 +1,67 @@
 extends CharacterBody2D
 
-signal stamina_changed(value)
-signal interaction_started(target)
+@export var speed: float = 300.0
+@export var sprint_multiplier: float = 1.5
+@export var interaction_range: float = 50.0
 
-const WALK_SPEED = 200.0
-const SPRINT_SPEED = 400.0
-const STAMINA_MAX = 100.0
-const STAMINA_DRAIN_RATE = 30.0
-const STAMINA_REGEN_RATE = 20.0
-const SPRINT_THRESHOLD = 20.0
+var current_npc: CharacterBody2D = null
+var is_sprinting: bool = false
+var initial_position: Vector2
 
-var current_speed = WALK_SPEED
-var stamina = STAMINA_MAX
-var is_sprinting = false
-var interaction_target = null
+@onready var stamina_bar = $"../UI/StaminaBar"
+@onready var camera = $Camera2D
 
-@onready var interaction_ray = $InteractionRay
+func _ready() -> void:
+	# Store initial position for reference
+	initial_position = position
+	
+	# Ensure camera is properly configured
+	if camera:
+		camera.make_current()
+		camera.reset_smoothing()
 
-func _ready():
-	add_to_group("player")
-	stamina_changed.emit(stamina / STAMINA_MAX)
-
-func _physics_process(delta):
-	var input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+func _physics_process(delta: float) -> void:
+	# Get input direction
+	var direction := Vector2.ZERO
+	direction.x = Input.get_axis("ui_left", "ui_right")
+	direction.y = Input.get_axis("ui_up", "ui_down")
+	direction = direction.normalized()
 	
 	# Handle sprinting
-	if Input.is_action_pressed("sprint") and stamina > SPRINT_THRESHOLD:
-		is_sprinting = true
-		current_speed = SPRINT_SPEED
-		stamina = max(0, stamina - STAMINA_DRAIN_RATE * delta)
-		stamina_changed.emit(stamina / STAMINA_MAX)
-	else:
-		is_sprinting = false
-		current_speed = WALK_SPEED
-		if stamina < STAMINA_MAX:
-			stamina = min(STAMINA_MAX, stamina + STAMINA_REGEN_RATE * delta)
-			stamina_changed.emit(stamina / STAMINA_MAX)
+	is_sprinting = Input.is_action_pressed("sprint") and stamina_bar.value > 0
+	var current_speed = speed * (sprint_multiplier if is_sprinting else 1.0)
+	
+	# Update stamina
+	if stamina_bar:
+		if is_sprinting and direction != Vector2.ZERO:
+			stamina_bar.value = max(0, stamina_bar.value - delta * 25)
+		else:
+			stamina_bar.value = min(100, stamina_bar.value + delta * 10)
 	
 	# Apply movement
-	if input_dir:
-		velocity = input_dir * current_speed
+	if direction:
+		velocity = direction * current_speed
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, current_speed)
 	
+	# Use move_and_slide for proper collision handling
 	move_and_slide()
 	
-	# Handle interaction
+	# Handle NPC interaction
 	if Input.is_action_just_pressed("interact"):
-		start_interaction()
-	elif Input.is_action_just_pressed("cancel_interaction"):
-		end_interaction()
+		var space_state = get_world_2d().direct_space_state
+		var query = PhysicsRayQueryParameters2D.create(global_position, global_position + Vector2.RIGHT.rotated(rotation) * interaction_range)
+		query.collision_mask = 2  # NPC layer
+		var result = space_state.intersect_ray(query)
+		
+		if result and result.collider.has_method("start_interaction"):
+			result.collider.start_interaction()
+			current_npc = result.collider
+		elif current_npc:
+			current_npc.end_interaction()
+			current_npc = null
 
-func start_interaction():
-	if interaction_ray.is_colliding():
-		var collider = interaction_ray.get_collider()
-		if collider.is_in_group("interactable"):
-			interaction_target = collider
-			interaction_started.emit(interaction_target)
-
-func end_interaction():
-	interaction_target = null
-
-func get_stamina():
-	return stamina / STAMINA_MAX
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("escape") and current_npc:
+		current_npc.end_interaction()
+		current_npc = null

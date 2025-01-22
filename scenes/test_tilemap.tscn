@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://byuqmoye2xhs2"]
+
+[ext_resource type="Script" path="res://scripts/test_tilemap.gd" id="1_script"]
+[ext_resource type="TileSet" uid="uid://dkepkhqe2glx8" path="res://resources/tileset.tres" id="2_tileset"]
+
+[node name="TestTileMap" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="TileMap" type="TileMap" parent="."]
+y_sort_enabled = true
+tile_set = ExtResource("2_tileset")
+format = 2
+layer_0/name = "Ground"
+layer_1/name = "Walls"
+layer_1/y_sort_enabled = true
+layer_1/z_index = 1
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(80, 80)
+zoom = Vector2(2, 2)

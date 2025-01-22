@@ -1,50 +1,62 @@
 # Enhanced .cursorrules for Shadow Worker Development
 
 # General Rule
-Cursor: execute Power Shell commands in the terminal one at a time
+**Cursor:** Execute PowerShell commands one at a time
+- Learn the commands before executing them
+- Use the appropriate terminal to execute the commands
 
 # AI-Assisted Development Rules
 
-1. When editing JSON templates, suggest corrections or enhancements that improve compatibility with scaling, transitions, and gameplay balance.
+1. **JSON Template Editing**
+   - Suggest corrections or enhancements that improve compatibility with scaling, transitions, and gameplay balance.
    - Validate room dimensions, connection points, and spawn placements against integration rules.
    - Automatically propose fixes for detected issues in real-time.
 
-2. Automatically generate scaled versions of room templates using the defined scaling modes (PixelPerfect, Smooth, Detailed) when templates are added or updated.
+2. **Automated Template Scaling**
+   - Generate scaled versions of room templates using defined scaling modes (PixelPerfect, Smooth, Detailed) when templates are added or updated.
    - Provide previews of scaled templates for validation.
    - Ensure gameplay features (doors, spawns, obstacles) are preserved during scaling.
 
-3. For collective consciousness mechanics, assist in generating NPC personality profiles by cross-referencing DSM-5 dimensions and Enneagram types.
+3. **NPC Personality Profiles**
+   - Assist in generating NPC personality profiles by cross-referencing DSM-5 dimensions and Enneagram types.
    - Suggest archetype-driven dialogue snippets.
    - Validate resonance state consistency during interactions.
 
-4. Enhance template transitions by automating the creation of smooth or sharp transitions between room types.
+4. **Template Transitions**
+   - Automate the creation of smooth or sharp transitions between room types.
    - Analyze neighboring templates for compatibility.
    - Automatically adjust height, orientation, and texture blends for seamless integration.
 
-5. Implement automated testing triggers when modifications are made to room templates, psychological systems, or world generation scripts.
+5. **Automated Testing**
+   - Implement automated testing triggers when modifications are made to room templates, psychological systems, or world generation scripts.
    - Run associated test suites, such as `RealitySystemTests` or `VisualEffectsTests`.
    - Provide detailed logs and suggest fixes for failed tests.
 
-6. Monitor performance during template validation and testing, offering optimization suggestions.
+6. **Performance Monitoring**
+   - Monitor performance during template validation and testing, offering optimization suggestions.
    - Highlight bottlenecks in memory management or loading times.
    - Recommend efficient batching or caching strategies.
 
-7. Enable AI-driven content suggestions for psychological resonance and environmental storytelling.
+7. **Content Suggestions**
+   - Enable AI-driven content suggestions for psychological resonance and environmental storytelling.
    - Generate room descriptions, NPC interactions, or quest objectives tailored to the game's psychological themes.
    - Ensure suggestions align with player progression mechanics.
 
-8. Actively assist in shader system configuration for surreal state visualization.
+8. **Shader System Configuration**
+   - Actively assist in shader system configuration for surreal state visualization.
    - Recommend parameters for distortion effects, transition smoothness, and visual intensity.
    - Simulate psychological states and offer previews for validation.
 
-9. Automatically log changes made to key systems (PersonalityProfile, WorldSystem, VisualEffectsManager) and test results.
+9. **Change Logging**
+   - Automatically log changes made to key systems (PersonalityProfile, WorldSystem, VisualEffectsManager) and test results.
    - Maintain a changelog for audit and rollback purposes.
    - Generate impact reports for large-scale modifications.
 
-10. Facilitate LLM integration by auto-generating templates for:
-    - NPC dialogues based on psychological traits.
-    - Procedural quest content with adaptive difficulty.
-    - Dynamic room annotations for storytelling.
+10. **LLM Integration**
+    - Facilitate LLM integration by auto-generating templates for:
+      - NPC dialogues based on psychological traits.
+      - Procedural quest content with adaptive difficulty.
+      - Dynamic room annotations for storytelling.
 
 # Developer Workflow Enhancements
 
@@ -54,15 +66,18 @@ Cursor: execute Power Shell commands in the terminal one at a time
 
 # Performance Safety Rules
 
-1. Monitor resource usage during template operations.
+1. **Resource Monitoring**
+   - Monitor resource usage during template operations.
    - Issue warnings if memory or processing thresholds are exceeded.
    - Automatically pause resource-intensive operations to avoid crashes.
 
-2. Validate scaling requests and offer suggestions for compatible sizes or modes.
+2. **Scaling Validation**
+   - Validate scaling requests and offer suggestions for compatible sizes or modes.
    - Prevent incompatible configurations from being applied.
    - Highlight potential gameplay impacts of requested changes.
 
-3. Execute background processes (e.g., scaling or template generation) asynchronously, keeping the IDE responsive.
+3. **Asynchronous Processing**
+   - Execute background processes (e.g., scaling or template generation) asynchronously, keeping the IDE responsive.
 
 # Cursor Rule: Intelligent Use of Shadow Workspace
 
@@ -101,3 +116,11 @@ Cursor: execute Power Shell commands in the terminal one at a time
 # Summary
 Leverage the shadow workspace as an intelligent, adaptable environment for experimentation, testing, and incremental development, maximizing productivity while safeguarding stability.
 
+# Adaptive Suggestions for Agentic Models
+
+Dynamically adapt suggestions to align with the user's real-time coding context and goals. Tailor recommendations for:
+- **Performance Optimization**: Propose faster algorithms, lighter operations, or memory-efficient constructs.
+- **Refactoring**: Suggest cleaner or more maintainable approaches to existing code.
+- **Project Consistency**: Ensure adherence to language-specific conventions and project-specific standards.
+
+Ensure suggestions are non-intrusive but precise, assisting the user with clear explanations and alternative solutions.

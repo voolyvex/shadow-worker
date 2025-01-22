@@ -3,4 +3,4 @@
 [ext_resource type="Script" path="res://scripts/generate_assets.gd" id="1_script"]
 
 [node name="AssetGenerator" type="Node"]
-script = ExtResource("1_script") 
+script = ExtResource("1_script")

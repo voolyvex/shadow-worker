@@ -167,49 +167,59 @@ class VisualEffectsManager {
 
 4. **Testing Infrastructure**
 ```gdscript
-class TestRunner:
+class TestRunner extends SceneTree:
     # Test tracking
     var total_tests: int
     var passed_tests: int
     var failed_tests: int
+    var exit_code: int
     
     # Test suites
     var reality_tests: RealitySystemTests
-    var effects_tests: VisualEffectsTests
+    var visual_tests: VisualEffectsTests
     
-    # Logging system
-    var logger: TestLogger
-    
-    # Mock objects
-    var mock_reality_system: MockRealitySystem
-    var mock_visual_effects: MockVisualEffectsManager
+    # Scene management
+    func _init():
+        # Initialize test environment
+        # Load and instantiate test scene
+        # Connect test signals
+        # Run test suites
+        # Report results
 ```
 
 ### Test Organization
 1. **Reality System Tests**
-   - Anomaly creation and removal
-   - Consciousness field management
-   - Multiple entity handling
-   - State validation
+   - Anomaly creation and removal with success validation
+   - Consciousness field management with parameter verification
+   - Multiple entity handling with state validation
+   - Position and property validation for all entities
+   - Proper cleanup between tests
 
 2. **Visual Effects Tests**
    - Effect start/stop functionality
    - Global intensity control
    - Multiple effect management
    - Parameter validation
+   - State persistence verification
 
 3. **Mock Objects**
-   - `MockRealitySystem`: Simulates reality manipulation
-   - `MockVisualEffectsManager`: Handles visual effect testing
-   - State reset between tests
-   - Signal emission for test events
+   - `MockRealitySystem`: Full reality system simulation
+     - Anomaly management with position and effect tracking
+     - Consciousness field creation with radius and influence type
+     - NPC influence calculation and state updates
+     - Global distortion tracking
+   - `MockVisualEffectsManager`: Visual effect simulation
+     - Effect parameter management
+     - State transitions
+     - Multiple effect coordination
 
 4. **Test Infrastructure**
-   - Automated test execution
-   - Comprehensive logging
-   - State cleanup between tests
-   - Asynchronous operation support
-   - Headless testing capability
+   - Automated test execution in headless mode
+   - Comprehensive logging with failure details
+   - State cleanup between test runs
+   - Signal-based test completion tracking
+   - Exit code management for CI/CD integration
+   - Scene-based test organization
 
 ### Data Flow
 1. Personality states influence world generation

@@ -292,5 +292,27 @@
                 "quality": "high"
             }
         }
+    },
+    "assetPaths": {
+        "sprites": {
+            "root": "res://art/sprites",
+            "characters": {
+                "player": "res://art/sprites/characters/player",
+                "npcs": "res://art/sprites/characters/npcs"
+            },
+            "environment": {
+                "tiles": "res://art/sprites/environment/tiles",
+                "props": "res://art/sprites/environment/props"
+            }
+        },
+        "legacy": {
+            "root": "res://assets",
+            "deprecated": true
+        }
+    },
+    "tileSettings": {
+        "size": 64,
+        "quadrantSize": 64,
+        "renderingQuadrantSize": 64
     }
 } 

@@ -1,19 +1,24 @@
-[gd_scene load_steps=4 format=3 uid="uid://bxj3vq6n7riyd"]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="PackedScene" uid="uid://hxj3vq6n7riyd" path="res://scenes/objects/base_object.tscn" id="1_base"]
+[ext_resource type="PackedScene" uid="uid://bxj3vq6n7riyd" path="res://scenes/objects/base_object.tscn" id="1_base"]
 [ext_resource type="Script" path="res://scripts/container.gd" id="2_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(32, 32)
 
-[node name="Container" instance=ExtResource("1_base")]
-script = ExtResource("2_script")
+[node name="Container" type="StaticBody2D"]
+collision_layer = 4
+collision_mask = 2
 
-[node name="CollisionShape2D" parent="." index="1"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_1")
 
-[node name="CollisionShape2D" parent="InteractionArea" index="0"]
-shape = SubResource("RectangleShape2D_1")
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+color = Color(0.4, 0.2, 0.1, 1.0)
 
 [node name="Label" parent="." index="3"]
 text = "Press E to open" 

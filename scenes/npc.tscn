@@ -1,29 +1,49 @@
-[gd_scene load_steps=3 format=3 uid="uid://cxj3vq6n7riyd"]
+[gd_scene load_steps=5 format=3 uid="uid://c3n4m5p6q7r8s"]
 
-[ext_resource type="Script" path="res://scripts/npc.gd" id="1_npc"]
+[ext_resource type="Script" path="res://scripts/npc.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://c8j6v3q4m5n2y" path="res://art/sprites/environment/tiles/mainlevbuild.png" id="2_sprite"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
-size = Vector2(24, 24)
+size = Vector2(48, 48)
 
-[node name="NPC" type="CharacterBody2D" groups=["npc"]]
-collision_layer = 8
-collision_mask = 3
-script = ExtResource("1_npc")
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 100.0
+
+[node name="NPC" type="CharacterBody2D" groups=["interactable"]]
+collision_layer = 2
+collision_mask = 5
+script = ExtResource("1_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_1")
 
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("2_sprite")
+
+[node name="DialogueLabel" type="Label" parent="."]
+offset_left = -150.0
+offset_top = -75.0
+offset_right = 150.0
+offset_bottom = -49.0
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DebugLabel" type="Label" parent="."]
+visible = false
+offset_left = -75.0
+offset_top = -105.0
+offset_right = 75.0
+offset_bottom = -79.0
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="DetectionArea" type="Area2D" parent="."]
 collision_layer = 0
-collision_mask = 2
+collision_mask = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="DetectionArea"]
-shape = SubResource("RectangleShape2D_1")
+shape = SubResource("CircleShape2D_1")
 
-[node name="DialogueDisplay" type="Label" parent="."]
-offset_left = -100.0
-offset_top = -40.0
-offset_right = 100.0
-offset_bottom = -24.0
-horizontal_alignment = 1
-vertical_alignment = 1 
+[connection signal="area_entered" from="DetectionArea" to="." method="_on_detection_area_entered"]
+[connection signal="area_exited" from="DetectionArea" to="." method="_on_detection_area_exited"]
