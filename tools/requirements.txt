@@ -1,0 +1,2 @@
+Pillow>=10.0.0  # For image manipulation
+numpy>=1.24.0   # For sound generation calculations 
