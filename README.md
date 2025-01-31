@@ -1,13 +1,12 @@
-# Shadow Worker Prototype
+# Shadow Worker
 
-A 2D game prototype built with Godot 4 and GDExtension (C++), with potential for 3D expansion.
+A 2D game prototype built with raylib, focusing on psychological horror and surreal environments.
 
 ## Requirements
 
-- Godot 4.3 (stable)
-- C++ compiler (Visual Studio 2019 or later for Windows)
-- SCons build system
-- Godot C++ bindings (godot-cpp)
+- C compiler (Visual Studio 2019 or later for Windows)
+- CMake 3.14 or later
+- raylib 4.5.0
 
 ## Setup
 
@@ -17,60 +16,45 @@ git clone https://github.com/yourusername/shadow-worker.git
 cd shadow-worker
 ```
 
-2. Make sure you have the Godot C++ bindings at `C:/Godot/godot-cpp`
+2. Build the project:
 ```bash
-cd C:/Godot/godot-cpp
-git checkout 4.3-stable
-scons platform=windows target=template_debug
-scons platform=windows target=template_release
-```
-3. Build the native library:
-```bash
-cd /path/to/shadow-worker
-scons platform=windows target=template_debug
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Debug
 ```
 
 ## Controls
 
 - Movement: WASD or Arrow keys
 - Interact: E key
+- Zoom: Mouse wheel
+- Reset camera: R key
+- Pause: ESC key
 
 ## Features
 
-- Smooth character movement with acceleration/deceleration
+- Smooth character movement with collision detection
 - NPC interaction system with dialogue
-- Basic tilemap-based world
-- Collision detection
-- Camera following
+- Dynamic sound system with footsteps and ambient music
+- Tile-based world system
+- Camera controls with zoom
+- Resonance field visualization
+- Psychological state system
 
 ## Project Structure
 
-- `src/` - C++ source files
-  - `player.h/cpp` - Player character implementation
-  - `npc.h/cpp` - NPC system implementation
-  - `register_types.h/cpp` - GDExtension registration
-- `scenes/` - Godot scene files
-  - `Main.tscn` - Main game scene
+- `src/` - Source files
+  - `core/` - Core systems (resource management, sound, etc.)
+  - `entities/` - Entity implementations (player, NPCs)
+  - `world.c` - World and room management
+  - `game_impl.c` - Main game implementation
+- `include/` - Header files
 - `resources/` - Game resources
-  - `tileset.tres` - Tilemap tileset
-  - `npc_dialogue.tres` - NPC dialogue data
-- `assets/` - Game assets
-  - `tiles/` - Tilemap textures
-  - `player.png` - Player sprite
-  - `npc.png` - NPC sprite
-- `scripts/` - GDExtension native script resources
-  - `player.gdns` - Player script resource
-  - `npc.gdns` - NPC script resource
-
-## Development
-
-1. Build the native library whenever C++ code changes:
-```bash
-scons platform=windows target=template_debug
-```
-
-2. Open the project in Godot Editor
-3. Run the game (F5)
+  - `sounds/` - Sound effects and music
+  - `sprites/` - Character and object sprites
+- `tests/` - Unit tests
+- `docs/` - Documentation
 
 ## Performance Targets
 

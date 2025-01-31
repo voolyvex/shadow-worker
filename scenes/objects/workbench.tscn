@@ -1,8 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://dxj3vq6n7riyd"]
-
-[ext_resource type="PackedScene" uid="uid://hxj3vq6n7riyd" path="res://scenes/objects/base_object.tscn" id="1_base"]
-
-[node name="Workbench" instance=ExtResource("1_base")]
-
-[node name="Label" parent="." index="2"]
-text = "Press E to use workbench" 
