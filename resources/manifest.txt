@@ -1,0 +1,21 @@
+# Shadow Worker Resource Manifest
+# Format: TYPE NAME PATH [ADDITIONAL_PARAMS]
+
+# Textures
+texture player_idle resources/sprites/player/idle.png
+texture player_walk resources/sprites/player/walk.png
+texture npc_base resources/sprites/npc/base.png
+texture tileset_main resources/maps/tileset_main.png
+
+# Fonts
+font main resources/fonts/main.ttf
+font dialogue resources/fonts/dialogue.ttf
+
+# Sounds
+sound footstep resources/sounds/footstep.wav
+sound ambient resources/sounds/ambient.wav
+sound interact resources/sounds/interact.wav
+
+# Shaders
+shader distortion resources/shaders/distortion.vs resources/shaders/distortion.fs
+shader resonance resources/shaders/resonance.vs resources/shaders/resonance.fs 
