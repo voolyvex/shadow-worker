@@ -237,8 +237,8 @@ void DrawEstateMap(const EstateMap* map) {
                 TILE_SIZE
             };
             
-            DrawTexturePro(map->tileset, sourceRect, destRect, 
-                          (Vector2){0, 0}, 0.0f, WHITE);
+            Vector2 origin = {0.0f, 0.0f};
+            DrawTexturePro(map->tileset, sourceRect, destRect, origin, 0.0f, WHITE);
         }
     }
     
@@ -261,8 +261,8 @@ void DrawEstateMap(const EstateMap* map) {
                     TILE_SIZE
                 };
                 
-                DrawTexturePro(map->tileset, sourceRect, destRect,
-                             (Vector2){0, 0}, 0.0f, WHITE);
+                Vector2 origin = {0.0f, 0.0f};
+                DrawTexturePro(map->tileset, sourceRect, destRect, origin, 0.0f, WHITE);
             }
         }
     }
