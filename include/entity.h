@@ -47,5 +47,6 @@ Entity* CreateEntity(EntityPool* pool, EntityType type, Vector2 position);
 void DestroyEntity(EntityPool* pool, Entity* entity);
 void UpdateEntities(EntityPool* pool, float deltaTime);
 void DrawEntities(EntityPool* pool);
+Entity* GetEntityByType(EntityPool* pool, EntityType type);
 
 #endif // SHADOW_WORKER_ENTITY_H 

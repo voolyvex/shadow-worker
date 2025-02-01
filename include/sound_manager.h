@@ -12,11 +12,30 @@ typedef enum SoundType {
     SOUND_COUNT
 } SoundType;
 
+// Sound manager structure
+typedef struct SoundManager {
+    Music* currentMusic;
+    float musicVolume;
+    float soundVolume;
+    bool isMusicEnabled;
+    bool isSoundEnabled;
+} SoundManager;
+
 // Function declarations
 bool InitSoundManager(void);
 void UnloadSoundManager(void);
+
 void PlayGameSound(SoundType type);
+void PlayGameMusic(Music* music);
+void StopGameMusic(void);
 void UpdateSoundManager(void);
-void SetGameMasterVolume(float volume);
+
+void SetGameMusicVolume(float volume);
+void SetGameSoundVolume(float volume);
+void ToggleMusic(void);
+void ToggleSound(void);
+
+// Helper functions
+const char* GetSoundName(SoundType type);
 
 #endif // SHADOW_WORKER_SOUND_MANAGER_H 

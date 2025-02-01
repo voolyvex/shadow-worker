@@ -63,6 +63,4 @@ cmake --build . --config Debug
 - Load time: <2 seconds
 - Input latency: <16ms
 
-## License
-
-MIT License - See LICENSE file for details 
+ 

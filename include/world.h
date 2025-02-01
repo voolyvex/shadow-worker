@@ -2,9 +2,16 @@
 #define SHADOW_WORKER_WORLD_H
 
 #include <raylib.h>
+#include <raymath.h>
 #include <stdbool.h>
 #include "resource_manager.h"
 #include "entity.h"
+
+// Forward declarations
+struct World;
+typedef struct World World;
+struct EstateMap;
+typedef struct EstateMap EstateMap;
 
 // World configuration
 #define ESTATE_WIDTH 50  // Larger than screen width
@@ -14,8 +21,13 @@
 #define WINDOW_HEIGHT 720
 #define MAX_SPAWN_POINTS 32
 
-// Forward declarations
-typedef struct World World;
+// Map structure
+typedef struct EstateMap {
+    World* world;
+    Texture2D tileset;
+    Vector2 spawnPoints[MAX_SPAWN_POINTS];
+    int spawnPointCount;
+} EstateMap;
 
 // Tile types for estate
 typedef enum TileType {
@@ -42,10 +54,20 @@ typedef struct TileProperties {
     const char* textureName;
 } TileProperties;
 
+// Object types
+typedef enum ObjectType {
+    OBJECT_NONE = 0,
+    OBJECT_TREE = 1,
+    OBJECT_BUSH = 2,
+    OBJECT_FLOWER = 3,
+    OBJECT_FOUNTAIN = 4
+} ObjectType;
+
 // World structure
-typedef struct World {
+struct World {
     TileType* tiles;
     TileProperties* tileProperties;
+    ObjectType* objects;       // Array of objects in the world
     Vector2 dimensions;
     EntityPool* entityPool;
     ResourceManager* resources;
@@ -57,7 +79,7 @@ typedef struct World {
     bool isStable;
     Vector2* spawnPoints;      // NPC spawn locations
     int spawnPointCount;       // Number of spawn points
-} World;
+};
 
 // Function declarations
 World* InitWorld(ResourceManager* resources);
@@ -71,6 +93,10 @@ void SetTileAt(World* world, int x, int y, TileType type);
 bool IsTileSolid(World* world, int x, int y);
 Vector2 GetTilePosition(int x, int y);
 void GenerateEstateMap(World* world);
+
+// Object management
+ObjectType GetObjectAt(World* world, int x, int y);
+void SetObjectAt(World* world, int x, int y, ObjectType type);
 
 // Spawn point management
 bool IsValidSpawnPoint(World* world, Vector2 position);

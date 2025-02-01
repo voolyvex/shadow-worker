@@ -1,8 +1,26 @@
-#include "../include/world.h"
-#include "../core/map.h"
+#include <raylib.h>
+#include <raymath.h>
 #include <stdlib.h>
 #include <string.h>
-#include <raymath.h>
+#include "../include/world.h"
+#include "core/map.h"
+
+struct World {
+    TileType* tiles;
+    TileProperties* tileProperties;
+    ObjectType* objects;       // Array of objects in the world
+    Vector2 dimensions;
+    EntityPool* entityPool;
+    ResourceManager* resources;
+    float deltaTime;
+    Camera2D* camera;
+    Rectangle bounds;
+    float globalResonance;
+    float instabilityLevel;
+    bool isStable;
+    Vector2* spawnPoints;      // NPC spawn locations
+    int spawnPointCount;       // Number of spawn points
+};
 
 // Camera configuration
 #define CAMERA_OFFSET_X (WINDOW_WIDTH / 2.0f)
@@ -37,8 +55,16 @@ World* InitWorld(ResourceManager* resources) {
         return NULL;
     }
     
+    world->objects = (ObjectType*)calloc(ESTATE_WIDTH * ESTATE_HEIGHT, sizeof(ObjectType));
+    if (!world->objects) {
+        free(world->tiles);
+        free(world);
+        return NULL;
+    }
+    
     world->tileProperties = (TileProperties*)malloc(TILE_COUNT * sizeof(TileProperties));
     if (!world->tileProperties) {
+        free(world->objects);
         free(world->tiles);
         free(world);
         return NULL;
@@ -51,6 +77,7 @@ World* InitWorld(ResourceManager* resources) {
     world->camera = (Camera2D*)malloc(sizeof(Camera2D));
     if (!world->camera) {
         free(world->tileProperties);
+        free(world->objects);
         free(world->tiles);
         free(world);
         return NULL;
@@ -71,25 +98,36 @@ World* InitWorld(ResourceManager* resources) {
     world->deltaTime = 0.0f;
     
     // Create and generate estate map
-    EstateMap* estateMap = CreateEstateMap(world);
+    EstateMap* estateMap = CreateEstateMap();
     if (!estateMap) {
         free(world->camera);
         free(world->tileProperties);
+        free(world->objects);
         free(world->tiles);
         free(world);
         return NULL;
     }
     
     // Generate the estate layout
-    GenerateEstate(estateMap);
+    GenerateEstateMap(estateMap);
     
     // Store spawn points for later use
-    world->spawnPoints = estateMap->spawnPoints;
-    world->spawnPointCount = estateMap->spawnPointCount;
-    estateMap->spawnPoints = NULL; // Transfer ownership
+    world->spawnPoints = malloc(sizeof(Vector2) * estateMap->spawnPointCount);
+    if (!world->spawnPoints) {
+        DestroyEstateMap(estateMap);
+        free(world->camera);
+        free(world->tileProperties);
+        free(world->objects);
+        free(world->tiles);
+        free(world);
+        return NULL;
+    }
     
-    // Clean up estate map (but keep spawn points)
-    UnloadEstateMap(estateMap);
+    memcpy(world->spawnPoints, estateMap->spawnPoints, sizeof(Vector2) * estateMap->spawnPointCount);
+    world->spawnPointCount = estateMap->spawnPointCount;
+    
+    // Clean up estate map
+    DestroyEstateMap(estateMap);
     
     return world;
 }
@@ -339,6 +377,7 @@ void UnloadWorld(World* world) {
     if (!world) return;
     
     if (world->tiles) free(world->tiles);
+    if (world->objects) free(world->objects);
     if (world->tileProperties) free(world->tileProperties);
     if (world->camera) free(world->camera);
     if (world->spawnPoints) free(world->spawnPoints);
@@ -446,4 +485,19 @@ Vector2 GetRandomSpawnPoint(World* world) {
     
     int index = rand() % world->spawnPointCount;
     return world->spawnPoints[index];
+}
+
+// Object management functions
+ObjectType GetObjectAt(World* world, int x, int y) {
+    if (!world || !world->objects || x < 0 || x >= ESTATE_WIDTH || y < 0 || y >= ESTATE_HEIGHT) {
+        return OBJECT_NONE;
+    }
+    return world->objects[y * ESTATE_WIDTH + x];
+}
+
+void SetObjectAt(World* world, int x, int y, ObjectType type) {
+    if (!world || !world->objects || x < 0 || x >= ESTATE_WIDTH || y < 0 || y >= ESTATE_HEIGHT) {
+        return;
+    }
+    world->objects[y * ESTATE_WIDTH + x] = type;
 } 

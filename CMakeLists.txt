@@ -5,6 +5,9 @@ project(shadow_worker C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Add _CRT_SECURE_NO_WARNINGS to disable unsafe function warnings
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+
 # Build type configuration
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
@@ -14,6 +17,25 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# Add platform-specific output directories for Windows
+if(WIN32)
+    # Force Debug configuration if not specified
+    if(NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE Debug)
+    endif()
+    
+    # Ensure proper slashes in paths
+    string(REPLACE "\\" "/" CMAKE_BINARY_DIR ${CMAKE_BINARY_DIR})
+    
+    # Set output directories for all configurations
+    foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+        string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${CMAKE_BINARY_DIR}/bin/${OUTPUTCONFIG}")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${CMAKE_BINARY_DIR}/lib/${OUTPUTCONFIG}")
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${CMAKE_BINARY_DIR}/lib/${OUTPUTCONFIG}")
+    endforeach()
+endif()
 
 # Add raylib as a subdirectory if it exists, otherwise download it
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/external/raylib)
@@ -53,7 +75,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 
-# Platform-specific settings
+# Add platform-specific libraries
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
 endif()
@@ -93,6 +115,7 @@ target_include_directories(${PROJECT_NAME}_tests PRIVATE
 
 target_link_libraries(${PROJECT_NAME}_tests PRIVATE raylib)
 
+# Add platform-specific libraries for tests
 if(WIN32)
     target_link_libraries(${PROJECT_NAME}_tests PRIVATE winmm)
 endif()

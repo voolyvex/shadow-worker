@@ -1,53 +1,27 @@
-#ifndef SHADOW_WORKER_MAP_H
-#define SHADOW_WORKER_MAP_H
+#ifndef MAP_H
+#define MAP_H
 
-#include <raylib.h>
-#include <stdbool.h>
+#include "raylib.h"
 #include "../../include/world.h"
 
-// Essential dimensions and constraints
-#define MAX_OBJECTS 256
-#define MAX_SPAWN_POINTS 32
-#define COURTYARD_SIZE 16
-
-// Tile access macros
-#define GET_TILE(map, x, y) GetTileAt(map->world, x, y)
-#define GET_OBJECT(map, x, y) GetObjectAt(map->world, x, y)
-
-// Object placement types
-typedef enum {
-    OBJECT_NONE = 0,
-    OBJECT_TREE = 1,
-    OBJECT_BUSH = 2,
-    OBJECT_FLOWER = 3,
-    OBJECT_FOUNTAIN = 4
-} ObjectType;
-
-// Primary map structure
-typedef struct {
-    World* world;              // Reference to the world system
-    Vector2* spawnPoints;      // NPC spawn locations
-    int spawnPointCount;
-    Texture2D tileset;         // Tileset texture for map rendering
-} EstateMap;
+// Macros for accessing tiles and objects
+#define GET_TILE(map, x, y) GetTileAt((map)->world, (x), (y))
+#define SET_TILE(map, x, y, type) SetTileAt((map)->world, (x), (y), (type))
+#define GET_OBJECT(map, x, y) GetObjectAt((map)->world, (x), (y))
+#define SET_OBJECT(map, x, y, type) SetObjectAt((map)->world, (x), (y), (type))
 
 // Core map functions
-EstateMap* CreateEstateMap(World* world);
-void UnloadEstateMap(EstateMap* map);
-void GenerateEstate(EstateMap* map);
+EstateMap* CreateEstateMap(void);
+void DestroyEstateMap(EstateMap* map);
+
+// Map generation functions
+void GenerateEstateMap(EstateMap* map);
+
+// Drawing functions
 void DrawEstateMap(const EstateMap* map);
 
-// Generation functions
-void InitializeBaseTerrain(EstateMap* map);
-void CreateCentralCourtyard(EstateMap* map);
-void GenerateMainPaths(EstateMap* map);
-void PlaceFountain(EstateMap* map);
-void CreateGardens(EstateMap* map);
-void AddDecorations(EstateMap* map);
-void SetSpawnPoints(EstateMap* map);
-
 // Utility functions
-bool IsValidSpawnPoint(const EstateMap* map, Vector2 position);
-Vector2 GetRandomSpawnPoint(const EstateMap* map);
+#define IsValidSpawnPoint(map, position) IsValidSpawnPoint((map)->world, (position))
+#define GetRandomSpawnPoint(map) GetRandomSpawnPoint((map)->world)
 
-#endif // SHADOW_WORKER_MAP_H 
+#endif // MAP_H 

@@ -21,11 +21,10 @@ typedef struct World World;
 
 // Game states
 typedef enum GameState {
-    STATE_MENU,
-    STATE_PLAYING,
-    STATE_PAUSED,
-    STATE_DIALOGUE,
-    STATE_GAME_OVER
+    GAME_STATE_MENU,
+    GAME_STATE_PLAYING,
+    GAME_STATE_PAUSED,
+    GAME_STATE_DIALOGUE
 } GameState;
 
 // Core game structure
@@ -42,9 +41,13 @@ typedef struct Game {
 
 // Function declarations
 Game* Game_Init(void);
-void Game_Update(Game* game);
-void Game_Draw(Game* game);
-void Game_Unload(Game* game);
+void Game_Update(void);
+void Game_Draw(void);
+void Game_Unload(void);
+
+// Game state management
+void Game_SetState(GameState state);
+GameState Game_GetState(void);
 
 // Utility functions
 void Game_TogglePause(Game* game);

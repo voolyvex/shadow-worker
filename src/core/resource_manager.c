@@ -80,46 +80,69 @@ static Wave* ConvertAudioFormat(Wave* wave) {
     }
 
     LOG_DEBUG(LOG_RESOURCE, "Converting audio format - Channels: %d, Sample Rate: %u",
-             wave->channels, wave->sampleRate);
-    
+              wave->channels, wave->sampleRate);
+        
     Wave* result = wave;
     bool needsConversion = false;
 
     // Convert sample rate if needed
     if (wave->sampleRate != AUDIO_SAMPLE_RATE) {
         needsConversion = true;
-        Wave* temp = WaveFormat(wave, wave->sampleSize, AUDIO_SAMPLE_RATE, wave->channels);
-        if (temp != NULL && temp->data != NULL) {
-            LOG_INFO(LOG_RESOURCE, "Successfully resampled audio to %d Hz", AUDIO_SAMPLE_RATE);
-            if (result != wave) {
-                UnloadWave(result);
-            }
-            result = temp;
-        } else {
-            LOG_ERROR(LOG_RESOURCE, "Failed to resample audio");
-            return wave;
+        Wave* temp = (Wave*)RL_MALLOC(sizeof(Wave));
+        if (temp == NULL) {
+            LOG_ERROR(LOG_RESOURCE, "Failed to allocate memory for wave conversion");
+            return NULL;
         }
+        memcpy(temp, wave, sizeof(Wave));
+        temp->data = RL_MALLOC(wave->frameCount * wave->channels * wave->sampleSize / 8);
+        if (temp->data == NULL) {
+            LOG_ERROR(LOG_RESOURCE, "Failed to allocate memory for wave data");
+            RL_FREE(temp);
+            return NULL;
+        }
+        memcpy(temp->data, wave->data, wave->frameCount * wave->channels * wave->sampleSize / 8);
+        WaveFormat(temp, AUDIO_SAMPLE_RATE, temp->sampleSize, temp->channels);
+        LOG_INFO(LOG_RESOURCE, "Successfully resampled audio to %d Hz", AUDIO_SAMPLE_RATE);
+        if (result != wave) {
+            UnloadWave(*result);
+            RL_FREE(result);
+        }
+        result = temp;
     }
-    
+        
     // Convert channels if needed
     if (wave->channels > AUDIO_CHANNELS) {
         needsConversion = true;
-        Wave* temp = WaveFormat(result, result->sampleSize, result->sampleRate, AUDIO_CHANNELS);
-        if (temp != NULL && temp->data != NULL) {
-            LOG_INFO(LOG_RESOURCE, "Successfully converted audio to stereo");
+        Wave* temp = (Wave*)RL_MALLOC(sizeof(Wave));
+        if (temp == NULL) {
+            LOG_ERROR(LOG_RESOURCE, "Failed to allocate memory for wave conversion");
             if (result != wave) {
-                UnloadWave(result);
+                UnloadWave(*result);
+                RL_FREE(result);
             }
-            result = temp;
-        } else {
-            LOG_ERROR(LOG_RESOURCE, "Failed to convert audio channels");
-            if (needsConversion) {
-                return result;
-            }
-            return wave;
+            return NULL;
         }
+        memcpy(temp, result, sizeof(Wave));
+        temp->data = RL_MALLOC(result->frameCount * result->channels * result->sampleSize / 8);
+        if (temp->data == NULL) {
+            LOG_ERROR(LOG_RESOURCE, "Failed to allocate memory for wave data");
+            RL_FREE(temp);
+            if (result != wave) {
+                UnloadWave(*result);
+                RL_FREE(result);
+            }
+            return NULL;
+        }
+        memcpy(temp->data, result->data, result->frameCount * result->channels * result->sampleSize / 8);
+        WaveFormat(temp, temp->sampleRate, temp->sampleSize, AUDIO_CHANNELS);
+        LOG_INFO(LOG_RESOURCE, "Successfully converted audio to stereo");
+        if (result != wave) {
+            UnloadWave(*result);
+            RL_FREE(result);
+        }
+        result = temp;
     }
-
+    
     return result;
 }
 
@@ -423,32 +446,29 @@ Wave* LoadGameSound(const char* filename) {
     *result = wave;
 
     if (needsConversion) {
-        // Convert sample rate if needed
-        if (wave.sampleRate != AUDIO_SAMPLE_RATE) {
-            Wave tempWave = WaveFormat(wave, wave.sampleSize, AUDIO_SAMPLE_RATE, wave.channels);
-            if (tempWave.data != NULL) {
-                UnloadWave(*result);
-                *result = tempWave;
-            } else {
-                LOG_ERROR(LOG_RESOURCE, "Failed to convert sample rate");
-                free(result);
+        Wave* convertedWave = ConvertAudioFormat(&wave);
+        if (convertedWave != NULL) {
+            // Save the converted wave
+            char convertedPath[256];
+            snprintf(convertedPath, sizeof(convertedPath), "%s.converted.wav", filename);
+            if (ExportWave(*convertedWave, convertedPath)) {
+                LOG_INFO(LOG_RESOURCE, "Saved converted wave to %s", convertedPath);
                 UnloadWave(wave);
+                wave = *convertedWave;
+                RL_FREE(convertedWave);
+            } else {
+                LOG_ERROR(LOG_RESOURCE, "Failed to save converted wave");
+                UnloadWave(*convertedWave);
+                RL_FREE(convertedWave);
+                UnloadWave(wave);
+                free(result);
                 return NULL;
             }
-        }
-
-        // Convert channels if needed
-        if (result->channels > AUDIO_CHANNELS) {
-            Wave tempWave = WaveFormat(*result, result->sampleSize, result->sampleRate, AUDIO_CHANNELS);
-            if (tempWave.data != NULL) {
-                UnloadWave(*result);
-                *result = tempWave;
-            } else {
-                LOG_ERROR(LOG_RESOURCE, "Failed to convert channels");
-                free(result);
-                UnloadWave(wave);
-                return NULL;
-            }
+        } else {
+            LOG_ERROR(LOG_RESOURCE, "Failed to convert wave format");
+            UnloadWave(wave);
+            free(result);
+            return NULL;
         }
     }
 

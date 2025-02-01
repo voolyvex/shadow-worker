@@ -13,178 +13,98 @@ static void* SafeAlloc(size_t size) {
     return ptr;
 }
 
-// Utility functions implementation
-bool IsInBounds(int x, int y) {
+// Helper functions
+static bool IsInBounds(int x, int y) {
     return x >= 0 && x < ESTATE_WIDTH && y >= 0 && y < ESTATE_HEIGHT;
 }
 
-int GetIndex(int x, int y) {
+static int GetIndex(int x, int y) {
     return y * ESTATE_WIDTH + x;
 }
 
-// Core map functions implementation
-EstateMap* CreateEstateMap(World* world) {
-    if (!world) return NULL;
+// Core map functions
+EstateMap* CreateEstateMap(void) {
+    EstateMap* map = (EstateMap*)malloc(sizeof(EstateMap));
+    if (!map) return NULL;
     
-    EstateMap* map = SafeAlloc(sizeof(EstateMap));
-    map->world = world;
-    map->spawnPoints = SafeAlloc(MAX_SPAWN_POINTS * sizeof(Vector2));
+    map->world = InitWorld(GetResourceManager());
+    if (!map->world) {
+        free(map);
+        return NULL;
+    }
+    
     map->spawnPointCount = 0;
+    map->tileset = LoadTexture("assets/tileset.png");
     
     return map;
 }
 
-void UnloadEstateMap(EstateMap* map) {
+void DestroyEstateMap(EstateMap* map) {
     if (!map) return;
     
-    if (map->spawnPoints) free(map->spawnPoints);
+    UnloadTexture(map->tileset);
+    UnloadWorld(map->world);
     free(map);
 }
 
-void GenerateEstate(EstateMap* map) {
+void GenerateEstateMap(EstateMap* map) {
     if (!map || !map->world) return;
     
-    InitializeBaseTerrain(map);
-    CreateCentralCourtyard(map);
-    GenerateMainPaths(map);
-    PlaceFountain(map);
-    CreateGardens(map);
-    AddDecorations(map);
-    SetSpawnPoints(map);
-}
-
-void InitializeBaseTerrain(EstateMap* map) {
-    if (!map || !map->world) return;
-    
+    // Initialize all tiles to grass
     for (int y = 0; y < ESTATE_HEIGHT; y++) {
         for (int x = 0; x < ESTATE_WIDTH; x++) {
-            SetTileAt(map->world, x, y, TILE_GRASS);
+            SET_TILE(map, x, y, TILE_GRASS);
+            SET_OBJECT(map, x, y, OBJECT_NONE);
         }
     }
-}
-
-void CreateCentralCourtyard(EstateMap* map) {
-    if (!map || !map->world) return;
     
-    int startX = (ESTATE_WIDTH - COURTYARD_SIZE) / 2;
-    int startY = (ESTATE_HEIGHT - COURTYARD_SIZE) / 2;
-    
-    for (int y = startY; y < startY + COURTYARD_SIZE; y++) {
-        for (int x = startX; x < startX + COURTYARD_SIZE; x++) {
-            SetTileAt(map->world, x, y, TILE_FLOOR);
-        }
-    }
-}
-
-void GenerateMainPaths(EstateMap* map) {
-    if (!map || !map->world) return;
-    
-    const int pathWidth = 2;
+    // Create a central path
     int centerX = ESTATE_WIDTH / 2;
     int centerY = ESTATE_HEIGHT / 2;
     
-    // Generate vertical path
-    for (int y = 0; y < ESTATE_HEIGHT; y++) {
-        for (int x = centerX - pathWidth/2; x <= centerX + pathWidth/2; x++) {
-            if (x >= 0 && x < ESTATE_WIDTH) {
-                SetTileAt(map->world, x, y, TILE_PATH);
-            }
-        }
+    // Horizontal path
+    for (int x = centerX - 5; x <= centerX + 5; x++) {
+        SET_TILE(map, x, centerY, TILE_PATH);
+        SET_TILE(map, x, centerY - 1, TILE_PATH);
+        SET_TILE(map, x, centerY + 1, TILE_PATH);
     }
     
-    // Generate horizontal path
-    for (int x = 0; x < ESTATE_WIDTH; x++) {
-        for (int y = centerY - pathWidth/2; y <= centerY + pathWidth/2; y++) {
-            if (y >= 0 && y < ESTATE_HEIGHT) {
-                SetTileAt(map->world, x, y, TILE_PATH);
-            }
-        }
+    // Vertical path
+    for (int y = centerY - 5; y <= centerY + 5; y++) {
+        SET_TILE(map, centerX, y, TILE_PATH);
+        SET_TILE(map, centerX - 1, y, TILE_PATH);
+        SET_TILE(map, centerX + 1, y, TILE_PATH);
     }
-}
-
-void PlaceFountain(EstateMap* map) {
-    if (!map || !map->world) return;
     
-    int centerX = ESTATE_WIDTH / 2;
-    int centerY = ESTATE_HEIGHT / 2;
-    
-    SetTileAt(map->world, centerX, centerY, TILE_FOUNTAIN);
-}
-
-void CreateGardens(EstateMap* map) {
-    if (!map || !map->world) return;
-    
-    // Create four garden areas in the corners of the courtyard
-    int startX = (ESTATE_WIDTH - COURTYARD_SIZE) / 2;
-    int startY = (ESTATE_HEIGHT - COURTYARD_SIZE) / 2;
-    int gardenSize = COURTYARD_SIZE / 4;
-    
-    // Place water features in each garden
+    // Add some water features
     for (int i = 0; i < 4; i++) {
-        int offsetX = (i % 2) * (COURTYARD_SIZE - gardenSize);
-        int offsetY = (i / 2) * (COURTYARD_SIZE - gardenSize);
+        int x = rand() % (ESTATE_WIDTH - 4) + 2;
+        int y = rand() % (ESTATE_HEIGHT - 4) + 2;
         
-        for (int y = 0; y < gardenSize; y++) {
-            for (int x = 0; x < gardenSize; x++) {
-                int mapX = startX + offsetX + x;
-                int mapY = startY + offsetY + y;
-                SetTileAt(map->world, mapX, mapY, TILE_WATER);
-            }
-        }
-    }
-}
-
-void AddDecorations(EstateMap* map) {
-    if (!map || !map->world) return;
-    
-    // Add trees along the paths
-    for (int y = 1; y < ESTATE_HEIGHT - 1; y += 4) {
-        for (int x = 1; x < ESTATE_WIDTH - 1; x += 4) {
-            if (GetTileAt(map->world, x, y) == TILE_GRASS) {
-                SetTileAt(map->world, x, y, TILE_TREE);
-            }
-        }
-    }
-    
-    // Add bushes and flowers near the courtyard
-    int startX = (ESTATE_WIDTH - COURTYARD_SIZE) / 2;
-    int startY = (ESTATE_HEIGHT - COURTYARD_SIZE) / 2;
-    
-    for (int y = startY - 2; y < startY + COURTYARD_SIZE + 2; y++) {
-        for (int x = startX - 2; x < startX + COURTYARD_SIZE + 2; x++) {
-            if (x >= 0 && x < ESTATE_WIDTH && y >= 0 && y < ESTATE_HEIGHT) {
-                if (GetTileAt(map->world, x, y) == TILE_GRASS) {
-                    SetTileAt(map->world, x, y, (rand() % 2) ? TILE_BUSH : TILE_FLOWER);
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (IsInBounds(x + dx, y + dy)) {
+                    SET_TILE(map, x + dx, y + dy, TILE_WATER);
                 }
             }
         }
     }
-}
-
-void SetSpawnPoints(EstateMap* map) {
-    if (!map || !map->world) return;
     
-    // Clear existing spawn points
-    map->spawnPointCount = 0;
-    
-    // Add spawn points at path intersections
-    int centerX = ESTATE_WIDTH / 2;
-    int centerY = ESTATE_HEIGHT / 2;
-    
-    // Cardinal directions
-    Vector2 spawnOffsets[] = {
-        {-COURTYARD_SIZE, 0},
-        {COURTYARD_SIZE, 0},
-        {0, -COURTYARD_SIZE},
-        {0, COURTYARD_SIZE}
-    };
-    
-    for (int i = 0; i < 4 && map->spawnPointCount < MAX_SPAWN_POINTS; i++) {
-        int x = centerX + spawnOffsets[i].x;
-        int y = centerY + spawnOffsets[i].y;
+    // Add some decorative objects
+    for (int i = 0; i < 20; i++) {
+        int x = rand() % ESTATE_WIDTH;
+        int y = rand() % ESTATE_HEIGHT;
         
-        if (x >= 0 && x < ESTATE_WIDTH && y >= 0 && y < ESTATE_HEIGHT) {
-            if (GetTileAt(map->world, x, y) == TILE_PATH) {
+        if (GET_TILE(map, x, y) == TILE_GRASS) {
+            ObjectType obj = (ObjectType)(rand() % (OBJECT_FOUNTAIN - OBJECT_TREE + 1) + OBJECT_TREE);
+            SET_OBJECT(map, x, y, obj);
+        }
+    }
+    
+    // Set spawn points along the paths
+    for (int y = 0; y < ESTATE_HEIGHT; y++) {
+        for (int x = 0; x < ESTATE_WIDTH; x++) {
+            if (GET_TILE(map, x, y) == TILE_PATH && map->spawnPointCount < MAX_SPAWN_POINTS) {
                 map->spawnPoints[map->spawnPointCount] = (Vector2){
                     x * TILE_SIZE + TILE_SIZE/2,
                     y * TILE_SIZE + TILE_SIZE/2
@@ -193,26 +113,6 @@ void SetSpawnPoints(EstateMap* map) {
             }
         }
     }
-}
-
-bool IsValidSpawnPoint(const EstateMap* map, Vector2 position) {
-    if (!map || !map->world) return false;
-    
-    // Convert world position to tile coordinates
-    int tileX = (int)(position.x / TILE_SIZE);
-    int tileY = (int)(position.y / TILE_SIZE);
-    
-    // Check if the tile is a valid spawn point (path tile)
-    return GetTileAt(map->world, tileX, tileY) == TILE_PATH;
-}
-
-Vector2 GetRandomSpawnPoint(const EstateMap* map) {
-    if (!map || map->spawnPointCount == 0) {
-        return (Vector2){0, 0};
-    }
-    
-    int index = rand() % map->spawnPointCount;
-    return map->spawnPoints[index];
 }
 
 void DrawEstateMap(const EstateMap* map) {
@@ -266,4 +166,9 @@ void DrawEstateMap(const EstateMap* map) {
             }
         }
     }
+}
+
+ObjectType GetObjectAt(const World* world, int x, int y) {
+    if (!world || !IsInBounds(x, y)) return OBJECT_NONE;
+    return world->objects[GetIndex(x, y)];
 } 

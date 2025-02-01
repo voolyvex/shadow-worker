@@ -1,24 +1,23 @@
 #ifndef SHADOW_WORKER_PLAYER_H
 #define SHADOW_WORKER_PLAYER_H
 
-#include "../entity.h"
-#include "../resource_manager.h"
-#include "../world.h"
+#include <raylib.h>
 
-// Player data structure
 typedef struct PlayerData {
-    float health;
-    float stamina;
-    float resonance;
-    bool isInvulnerable;
-    bool isInteracting;
-    World* world;
+    Vector2 position;
+    float speed;
+    int health;
+    int stamina;
+    int resonance;
+    bool isMoving;
+    Vector2 velocity;
+    float footstepTimer;
+    float footstepInterval;
 } PlayerData;
 
-// Function declarations
-Entity* CreatePlayer(EntityPool* pool, Vector2 position, ResourceManager* resources);
-void UpdatePlayer(Entity* entity, float deltaTime);
-void DrawPlayer(Entity* entity);
-void UnloadPlayer(Entity* player);
+PlayerData* CreatePlayer(void);
+void DestroyPlayer(void);
+void UpdatePlayer(float deltaTime);
+void DrawPlayer(void);
 
 #endif // SHADOW_WORKER_PLAYER_H 
