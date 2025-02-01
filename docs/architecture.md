@@ -62,6 +62,7 @@ The game centers around a sophisticated psychological system that integrates:
    - Reality anomaly creation and management
    - Consciousness field implementation
 
+### In Progress
 3. **Base Game Systems**
    - Player movement and interaction
    - World generation framework
@@ -70,7 +71,6 @@ The game centers around a sophisticated psychological system that integrates:
    - Mock system implementations
    - State management and cleanup
 
-### In Progress
 1. **Integration Systems**
    - Collective consciousness mechanics
    - Reality distortion effects
@@ -439,3 +439,165 @@ scripts/
    - Integration tests for LLM features
    - Performance benchmarks
    - User experience testing
+
+## System Overview
+
+Shadow Worker is built on a modular architecture that emphasizes clean separation of concerns and maintainable code. The core systems are designed to work together while remaining independent and testable.
+
+## Core Systems
+
+### 1. World System
+The foundation of the game environment, managing:
+- Tile-based world representation
+- Collision detection
+- Resource management
+- Entity management
+- Camera control
+- Physics interactions
+
+#### Estate Map System
+A specialized subsystem for generating and managing the estate layout:
+- Procedural generation of estate layouts
+- Tile and object placement
+- Spawn point management
+- Garden and decoration placement
+- Path generation
+- Water feature placement
+
+### 2. Entity System
+Handles all dynamic objects in the game:
+- Player character
+- NPCs
+- Interactive objects
+- Particle effects
+- Collision detection
+- State management
+
+### 3. Resource Management
+Centralizes asset handling:
+- Texture loading and caching
+- Sound management
+- Memory optimization
+- Asset cleanup
+
+### 4. Rendering System
+Manages all visual aspects:
+- Tile rendering
+- Entity rendering
+- Particle effects
+- UI elements
+- Camera management
+- Visual effects
+
+### 5. Input System
+Handles all user interaction:
+- Keyboard input
+- Mouse input
+- Controller support
+- Input mapping
+- Event propagation
+
+### 6. Sound System
+Manages audio components:
+- Sound effects
+- Background music
+- Spatial audio
+- Volume control
+- Audio streaming
+
+## Data Structures
+
+### World
+```c
+typedef struct World {
+    TileType* tiles;
+    TileProperties* tileProperties;
+    Vector2 dimensions;
+    EntityPool* entityPool;
+    ResourceManager* resources;
+    Camera2D* camera;
+    Rectangle bounds;
+    float globalResonance;
+    float instabilityLevel;
+    bool isStable;
+    Vector2* spawnPoints;
+    int spawnPointCount;
+} World;
+```
+
+### Estate Map
+```c
+typedef struct EstateMap {
+    World* world;
+    Vector2* spawnPoints;
+    int spawnPointCount;
+} EstateMap;
+```
+
+## Key Features
+
+### 1. Procedural Generation
+- Estate layout generation
+- Dynamic path creation
+- Garden placement
+- Object distribution
+- Spawn point allocation
+
+### 2. Psychological Elements
+- Resonance system
+- Reality distortion
+- Mental state tracking
+- Environmental responses
+- NPC behavior adaptation
+
+### 3. Environmental Interaction
+- Dynamic lighting
+- Weather effects
+- Time system
+- Environmental hazards
+- Interactive objects
+
+## File Structure
+
+```
+shadow-worker/
+├── src/
+│   ├── core/
+│   │   ├── map.c          # Estate map implementation
+│   │   ├── map.h          # Estate map interface
+│   │   └── map_test.c     # Estate map unit tests
+│   ├── entities/
+│   ├── systems/
+│   └── utils/
+├── include/
+│   ├── world.h
+│   └── entity.h
+├── resources/
+│   ├── maps/
+│   │   ├── tileset_main.png
+│   │   └── tileset_config.json
+│   └── objects/
+└── docs/
+    └── architecture.md
+```
+
+## Build System
+- CMake-based build system
+- Cross-platform compatibility
+- Automated testing
+- Resource management
+- Development tools
+
+## Testing Strategy
+- Unit tests for core systems
+- Integration tests
+- Performance benchmarks
+- Memory leak detection
+- Automated test suite
+
+## Future Considerations
+- Enhanced procedural generation
+- Advanced AI behaviors
+- Extended environment interaction
+- Additional psychological elements
+- Performance optimizations

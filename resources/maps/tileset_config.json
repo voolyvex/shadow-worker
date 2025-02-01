@@ -1,52 +1,77 @@
 {
     "tileSize": 32,
     "tiles": {
-        "empty": {
+        "grass": {
             "id": 0,
             "solid": false,
             "coords": [0, 0]
         },
-        "wall": {
+        "path": {
             "id": 1,
-            "solid": true,
+            "solid": false,
             "coords": [1, 0]
         },
-        "floor": {
+        "water": {
             "id": 2,
-            "solid": false,
+            "solid": true,
             "coords": [2, 0]
         },
-        "door": {
+        "wall": {
+            "id": 3,
+            "solid": true,
+            "coords": [3, 0]
+        },
+        "floor": {
+            "id": 4,
+            "solid": false,
+            "coords": [4, 0]
+        }
+    },
+    "objects": {
+        "none": {
+            "id": 0,
+            "solid": false,
+            "coords": [0, 1]
+        },
+        "tree": {
+            "id": 1,
+            "solid": true,
+            "coords": [1, 1]
+        },
+        "bush": {
+            "id": 2,
+            "solid": true,
+            "coords": [2, 1]
+        },
+        "flower": {
             "id": 3,
             "solid": false,
-            "coords": [3, 0],
-            "interactive": true
+            "coords": [3, 1]
         },
-        "obstacle": {
+        "fountain": {
             "id": 4,
             "solid": true,
-            "coords": [4, 0],
-            "destructible": true
+            "coords": [4, 1]
         }
     },
     "layers": {
-        "background": 0,
-        "main": 1,
-        "foreground": 2
+        "terrain": 0,
+        "objects": 1
     },
     "animations": {
-        "door_open": {
-            "frames": [[3, 0], [3, 1], [3, 2]],
-            "duration": 0.5
-        },
-        "resonance_floor": {
-            "frames": [[2, 1], [2, 2], [2, 3]],
+        "water_ripple": {
+            "frames": [[2, 0], [2, 1], [2, 2]],
             "duration": 1.0
+        },
+        "fountain_flow": {
+            "frames": [[4, 1], [4, 2], [4, 3]],
+            "duration": 0.8
         }
     },
     "properties": {
         "resonanceEnabled": true,
         "shadowCasting": true,
-        "ambientOcclusion": true
+        "ambientOcclusion": true,
+        "waterReflections": true
     }
 } 

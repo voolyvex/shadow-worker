@@ -7,58 +7,56 @@
 #include "entity.h"
 
 // World configuration
-#define MAX_ROOMS 100
-#define ROOM_WIDTH 32
-#define ROOM_HEIGHT 24
+#define ESTATE_WIDTH 50  // Larger than screen width
+#define ESTATE_HEIGHT 40 // Larger than screen height
 #define TILE_SIZE 32
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720
+#define MAX_SPAWN_POINTS 32
 
 // Forward declarations
-typedef struct Room Room;
 typedef struct World World;
 
-// Room types
-typedef enum RoomType {
-    ROOM_NORMAL,
-    ROOM_CORRIDOR,
-    ROOM_SPECIAL,
-    ROOM_BOSS
-} RoomType;
-
-// Tile types
+// Tile types for estate
 typedef enum TileType {
-    TILE_EMPTY,
+    TILE_GRASS,
+    TILE_PATH,
+    TILE_WATER,
     TILE_WALL,
     TILE_FLOOR,
-    TILE_DOOR,
-    TILE_OBSTACLE
+    TILE_COLUMN,
+    TILE_TREE,
+    TILE_BUSH,
+    TILE_FLOWER,
+    TILE_FOUNTAIN,
+    TILE_STATUE,
+    TILE_COUNT
 } TileType;
 
-// Room structure
-typedef struct Room {
-    RoomType type;
-    Rectangle bounds;
-    TileType* tiles;
-    Vector2* spawnPoints;
-    int spawnCount;
-    bool isGenerated;
-    float resonanceLevel;
-    struct Room* connections[4]; // North, East, South, West
-} Room;
+// Tile properties
+typedef struct TileProperties {
+    bool isSolid;
+    bool isWater;
+    bool isInteractive;
+    Rectangle textureRect;  // Source rectangle in tileset
+    const char* textureName;
+} TileProperties;
 
 // World structure
 typedef struct World {
-    Room* rooms;
-    int roomCount;
-    Room* currentRoom;
-    bool isGenerating;
-    Vector2 fieldDimensions;
-    float* resonanceField;
+    TileType* tiles;
+    TileProperties* tileProperties;
+    Vector2 dimensions;
+    EntityPool* entityPool;
+    ResourceManager* resources;
+    float deltaTime;
+    Camera2D* camera;
+    Rectangle bounds;
     float globalResonance;
     float instabilityLevel;
     bool isStable;
-    EntityPool* entityPool;
-    float deltaTime;
-    ResourceManager* resources;
+    Vector2* spawnPoints;      // NPC spawn locations
+    int spawnPointCount;       // Number of spawn points
 } World;
 
 // Function declarations
@@ -67,25 +65,24 @@ void UpdateWorld(World* world, float deltaTime);
 void DrawWorld(World* world);
 void UnloadWorld(World* world);
 
-// Room management
-Room* CreateRoom(World* world, RoomType type, Vector2 position);
-void LoadRoom(World* world, Room* room);
-void UnloadRoom(World* world, Room* room);
-void UpdateRoom(World* world, Room* room);
-void DrawRoom(World* world, Room* room);
-
 // Tile management
-TileType GetTileAt(Room* room, int x, int y);
-void SetTileAt(Room* room, int x, int y, TileType type);
-bool IsTileSolid(TileType type);
+TileType GetTileAt(World* world, int x, int y);
+void SetTileAt(World* world, int x, int y, TileType type);
+bool IsTileSolid(World* world, int x, int y);
 Vector2 GetTilePosition(int x, int y);
+void GenerateEstateMap(World* world);
 
-// Room connections
-void ConnectRooms(Room* room1, Room* room2, int direction);
-bool FindPath(Room* room, Vector2 start, Vector2 end, Vector2* path, int* pathLength);
-float GetPathCost(Room* room, Vector2 start, Vector2 end);
+// Spawn point management
+bool IsValidSpawnPoint(World* world, Vector2 position);
+Vector2 GetRandomSpawnPoint(World* world);
+
+// Collision handling
+bool CheckCollision(World* world, Rectangle bounds);
 
 // Debug
 void DebugDrawWorld(World* world);
+
+// Global world instance getter
+World* GetWorld(void);
 
 #endif // SHADOW_WORKER_WORLD_H 

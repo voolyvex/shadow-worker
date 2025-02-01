@@ -1,7 +1,181 @@
-# Template System Documentation
+# Shadow Worker - Template System Documentation
 
 ## Overview
-The template system provides a flexible and scalable approach to room and environment generation in Shadow Worker. It supports dynamic scaling, seamless transitions, and intelligent feature preservation across different room sizes.
+
+The template system in Shadow Worker provides a flexible and extensible way to define and generate game environments. It consists of two main components:
+1. The Estate Map System
+2. The Room Template System
+
+## Estate Map System
+
+### Purpose
+The Estate Map System generates the overall layout of the game environment, including:
+- Central courtyard
+- Connecting paths
+- Gardens and water features
+- Decorative elements
+- NPC spawn points
+
+### Key Components
+
+#### 1. Tile Types
+```c
+typedef enum {
+    TILE_GRASS,    // Base terrain
+    TILE_PATH,     // Walkable paths
+    TILE_WATER,    // Water features
+    TILE_WALL,     // Solid boundaries
+    TILE_FLOOR     // Interior surfaces
+} TileType;
+```
+
+#### 2. Object Types
+```c
+typedef enum {
+    OBJECT_NONE,    // Empty space
+    OBJECT_TREE,    // Large vegetation
+    OBJECT_BUSH,    // Medium vegetation
+    OBJECT_FLOWER,  // Small vegetation
+    OBJECT_FOUNTAIN // Central feature
+} ObjectType;
+```
+
+### Generation Process
+
+1. Base Terrain
+   - Initialize grass base layer
+   - Define estate boundaries
+   - Set up collision properties
+
+2. Core Layout
+   - Generate central courtyard
+   - Create main pathways
+   - Place central fountain
+   - Define key architectural elements
+
+3. Environmental Features
+   - Add water features
+   - Place vegetation
+   - Create garden areas
+   - Distribute decorative elements
+
+4. Gameplay Elements
+   - Define spawn points
+   - Place interactive objects
+   - Set up collision zones
+   - Configure navigation paths
+
+## Tileset Configuration
+
+The tileset configuration (`tileset_config.json`) defines the visual and behavioral properties of all tiles and objects:
+
+```json
+{
+    "tileSize": 32,
+    "tiles": {
+        "grass": {
+            "id": 0,
+            "solid": false,
+            "coords": [0, 0]
+        },
+        // ... other tile definitions
+    },
+    "objects": {
+        "tree": {
+            "id": 1,
+            "solid": true,
+            "coords": [1, 1]
+        },
+        // ... other object definitions
+    },
+    "animations": {
+        "water_ripple": {
+            "frames": [[2, 0], [2, 1], [2, 2]],
+            "duration": 1.0
+        }
+    }
+}
+```
+
+## Integration with World System
+
+The Estate Map System integrates with the World System through:
+
+1. Tile Management
+```c
+void SetTileAt(World* world, int x, int y, TileType type);
+TileType GetTileAt(World* world, int x, int y);
+```
+
+2. Spawn Point Management
+```c
+bool IsValidSpawnPoint(World* world, Vector2 position);
+Vector2 GetRandomSpawnPoint(World* world);
+```
+
+3. Collision Detection
+```c
+bool IsTileSolid(World* world, int x, int y);
+bool CheckCollision(World* world, Rectangle bounds);
+```
+
+## Memory Management
+
+The system employs careful memory management:
+
+1. Allocation
+```c
+EstateMap* CreateEstateMap(World* world);
+```
+
+2. Cleanup
+```c
+void UnloadEstateMap(EstateMap* map);
+```
+
+## Testing
+
+The template system includes comprehensive testing:
+
+1. Unit Tests
+```c
+void AssertInBounds(void);
+void AssertGetIndex(void);
+void ValidateMapCreation(void);
+void ValidateMapGeneration(void);
+```
+
+2. Integration Tests
+- World system integration
+- Resource management
+- Memory leak detection
+- Performance benchmarks
+
+## Future Enhancements
+
+1. Procedural Generation
+   - Enhanced path algorithms
+   - More varied garden layouts
+   - Dynamic object placement
+   - Weather-based variations
+
+2. Visual Effects
+   - Dynamic lighting
+   - Particle systems
+   - Weather effects
+   - Time-of-day changes
+
+3. Gameplay Features
+   - Interactive objects
+   - Dynamic events
+   - Environmental hazards
+   - Seasonal changes
+
+4. Performance Optimizations
+   - Tile batching
+   - Occlusion culling
+   - Memory pooling
+   - Asset streaming
 
 ## Template Types
 
