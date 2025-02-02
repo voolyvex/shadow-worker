@@ -1,57 +1,53 @@
-#ifndef SHADOW_WORKER_GAME_H
-#define SHADOW_WORKER_GAME_H
+#ifndef GAME_H
+#define GAME_H
 
 #include <raylib.h>
 #include <stdbool.h>
-#include "resource_manager.h"
-#include "entity.h"
-#include "world.h"
-
-// Game window configuration
-#define MAX_ENTITIES 1000
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 720
-#define GAME_TITLE "Shadow Worker"
-#define TARGET_FPS 60
 
 // Forward declarations
-typedef struct Scene Scene;
-typedef struct EntityPool EntityPool;
-typedef struct World World;
+struct World;
+struct EntityPool;
+struct ResourceManager;
+
+// Game configuration
+#define GAME_TITLE "Shadow Worker"
+#define TARGET_FPS 60
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720
 
 // Game states
-typedef enum GameState {
+typedef enum {
     GAME_STATE_MENU,
     GAME_STATE_PLAYING,
     GAME_STATE_PAUSED,
     GAME_STATE_DIALOGUE
 } GameState;
 
-// Core game structure
+// Game structure
 typedef struct Game {
     GameState state;
     bool isRunning;
     float deltaTime;
+    void* currentScene;
+    struct EntityPool* entityPool;
+    struct World* world;
+    struct ResourceManager* resources;
     Camera2D camera;
-    Scene* currentScene;
-    ResourceManager* resources;
-    EntityPool* entityPool;
-    World* world;
 } Game;
 
-// Function declarations
+// Core game functions
 Game* Game_Init(void);
 void Game_Update(void);
 void Game_Draw(void);
 void Game_Unload(void);
 
 // Game state management
-void Game_SetState(GameState state);
-GameState Game_GetState(void);
-
-// Utility functions
 void Game_TogglePause(Game* game);
 void Game_ChangeState(Game* game, GameState newState);
+void Game_ResetState(Game* game);
 void Game_UpdateCamera(Game* game);
 
-#endif // SHADOW_WORKER_GAME_H 
+// World access
+struct World* GetWorld(void);
+
+#endif // GAME_H 
