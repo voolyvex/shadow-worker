@@ -5,6 +5,7 @@ BEGIN_EXTERNAL_WARNINGS
 // External includes
 #include <raylib.h>
 #include <raymath.h>
+#include <stdio.h>
 
 END_EXTERNAL_WARNINGS
 
@@ -19,6 +20,10 @@ END_EXTERNAL_WARNINGS
 
 // Macro for unused parameters
 #define UNUSED(x) (void)(x)
+
+// Function declarations
+static void RenderMapLayers(MapSystem* mapSystem);
+static void UpdateMapSystem(World* world, float deltaTime);
 
 // Helper functions for chunk management
 static CachedChunk* GetChunk(ChunkCache* cache, Vector2 gridPos) {
@@ -119,7 +124,7 @@ static void CreateChunk(MapSystem* mapSystem, Vector2 gridPos) {
     UpdateChunkTexture(mapSystem, &cache->chunks[cache->chunkCount - 1]);
 }
 
-void UpdateMapSystem(World* world, float deltaTime) {
+static void UpdateMapSystem(World* world, float deltaTime) {
     UNUSED(deltaTime);
     if (!world || !world->mapSystem || !world->mapSystem->currentMap) return;
     
@@ -161,7 +166,7 @@ void UpdateMapSystem(World* world, float deltaTime) {
     map->cache.frameCounter++;
 }
 
-void RenderMapLayers(MapSystem* mapSystem) {
+static void RenderMapLayers(MapSystem* mapSystem) {
     if (!mapSystem || !mapSystem->currentMap) return;
     
     TileMap* map = mapSystem->currentMap;
