@@ -32,413 +32,234 @@ The game centers around a sophisticated psychological system that integrates:
    - Handles psychological events and transformations
    - Tracks resonance and reality perception states
 
-2. **WorldSystem**
+2. **World System**
    - Procedural room generation with psychological theming
    - Object and NPC placement based on psychological states
    - Environmental response to collective consciousness
+   - Integration with `MapSystem` for map loading, updating, and rendering
+   - Utilizes `TextureManager` for efficient texture handling
 
-3. **Interaction System**
+3. **Component System**
+   - Manages entity components using a `ComponentRegistry`
+   - Supports dynamic component addition and removal
+   - Ensures memory-aligned component storage for performance
+   - Implements size type safety with `SAFE_SIZE_T` and `SAFE_ARRAY_INDEX` macros
+   - Uses aligned memory allocation for optimal cache usage
+   - Provides boundary-checked array access and memory management
+   - Supports automatic component array growth with safety checks
+   - Implements efficient component removal with last-element swap
+
+4. **Map Integration**
+   - Handles map loading, updating, and rendering
+   - Supports multiple render layers for complex scenes
+   - Includes collision grid for spatial partitioning and collision detection
+
+5. **Interaction System**
    - Ray-based interaction detection
    - Event-driven psychological influence
    - Reality manipulation through consciousness
 
+## Technical Architecture
+
+### Core Systems
+
+1. **World System**
+   - Manages the overall game world, including entities, tiles, and objects
+   - Coordinates with the `MapSystem` and `TextureManager` for rendering
+   - Provides functions for updating and drawing the world state
+
+2. **Entity System**
+   - Utilizes an `EntityPool` for efficient entity management
+   - Supports component-based architecture with dynamic component handling
+   - Provides functions for spawning, updating, and removing entities
+
+3. **Map System**
+   - Manages map data, including tiles, collision grids, and render layers
+   - Provides functions for loading, updating, and rendering maps
+   - Integrates with the `WorldSystem` for seamless map transitions
+
+4. **Texture Management**
+   - Utilizes a `TextureManager` for handling texture atlases and caching
+   - Provides functions for loading and retrieving textures and regions
+   - Ensures efficient texture usage across the game
+
+5. **Interaction System**
+   - Detects interactions using ray-based techniques
+   - Triggers psychological events based on player actions
+   - Allows for reality manipulation through player consciousness
+
+### Memory Management
+
+1. **Allocation Strategy**
+```c
+static void* SafeAlloc(size_t size) {
+    void* ptr = calloc(1, size);
+    if (!ptr) {
+        TraceLog(LOG_ERROR, "Memory allocation failed");
+        exit(1);
+    }
+    return ptr;
+}
+```
+
+2. **Resource Cleanup**
+```c
+void UnloadResources(void) {
+    // Unload textures
+    for (int i = 0; i < textureCount; i++) {
+        UnloadTexture(textures[i]);
+    }
+    
+    // Unload audio
+    for (int i = 0; i < waveCount; i++) {
+        UnloadWave(waves[i]);
+    }
+    
+    // Unload music
+    for (int i = 0; i < musicCount; i++) {
+        UnloadMusicStream(music[i]);
+    }
+}
+```
+
+### Validation Process
+
+1. **Build Validation**
+   - Clean build with zero warnings (-Werror enabled)
+   - ASAN/UBSAN checks in debug builds
+   - CMake configuration validation
+   - Dependency verification
+
+2. **Memory Alignment**
+   - Structure alignment verification
+   ```c
+   static_assert(sizeof(World) % alignof(max_align_t) == 0, "World struct not properly aligned");
+   static_assert(sizeof(Entity) % alignof(max_align_t) == 0, "Entity struct not properly aligned");
+   static_assert(sizeof(EstateMap) % alignof(max_align_t) == 0, "EstateMap struct not properly aligned");
+   ```
+   - Padding optimization
+   - Cache line alignment for critical structures
+
+3. **Functional Testing**
+   - Unit tests for all core systems
+   ```c
+   void run_map_tests(void) {
+       test_map_creation();
+       test_map_generation();
+       test_spawn_points();
+       test_map_tile_access();
+   }
+   ```
+   - Integration tests for system interactions
+   - Performance benchmarks for critical paths
+
+4. **Memory Management**
+   - Memory leak detection through ASAN
+   - Resource cleanup verification
+   - Allocation tracking in debug builds
+   - Boundary checks on all array accesses
+
+5. **Documentation Requirements**
+   - All public APIs documented
+   - Test coverage reports generated
+   - Memory usage patterns documented
+   - Performance characteristics noted
+
+### Testing Infrastructure
+
+1. **Unit Tests**
+   - Core system validation
+   - Edge case handling
+   - Error condition testing
+   - Performance benchmarking
+
+2. **Integration Tests**
+   - System interaction verification
+   - Resource management validation
+   - State transition testing
+   - Error recovery validation
+
+3. **Performance Tests**
+   - Memory usage monitoring
+   - CPU utilization tracking
+   - Frame time analysis
+   - Resource loading benchmarks
+
+4. **Validation Tools**
+   - Static analysis (clang-tidy)
+   - Dynamic analysis (ASAN, UBSAN)
+   - Memory profiling (Valgrind)
+   - Performance profiling (perf)
+
 ## Implementation Status
 
 ### Completed
-1. **Core Framework**
-   - PersonalityProfile class with full psychological system
-   - Enneagram and DSM integration
-   - Shadow aspects and projections
-   - Surreal state management
-   - Comprehensive testing infrastructure with mock objects
-   - Automated test suite with headless execution
+1. **Core Systems**
+   - World system implementation
+   - Estate map generation
+   - Entity management
+   - Resource handling
+   - Memory management
+   - Test infrastructure
 
-2. **Psychological Systems**
-   - Resonance state progression
-   - Reality perception layers
-   - Inner truth manifestations
-   - Consciousness thresholds
-   - Visual effects system for psychological states
-   - Reality anomaly creation and management
-   - Consciousness field implementation
+2. **Validation**
+   - Clean build process
+   - Memory alignment verification
+   - Core functionality testing
+   - Memory leak detection
+   - Documentation updates
 
 ### In Progress
-3. **Base Game Systems**
-   - Player movement and interaction
-   - World generation framework
-   - Basic object placement
-   - Test-driven development workflow
-   - Mock system implementations
-   - State management and cleanup
+1. **System Integration**
+   - Entity interaction refinement
+   - Resource optimization
+   - Performance tuning
+   - Test coverage expansion
 
-1. **Integration Systems**
-   - Collective consciousness mechanics
+2. **Advanced Features**
+   - Psychological system implementation
    - Reality distortion effects
-   - Psychological event propagation
-   - Visual effects refinement
-   - Integration testing expansion
-   - Performance optimization
-
-2. **Visual Systems**
-   - Surreal state visualization
-   - Psychological manifestations
-   - Reality distortion effects
-   - Visual effect parameter tuning
-   - Shader system implementation
-   - Effect transition smoothing
+   - Visual effect system
+   - Audio management
 
 ### Next Steps
-1. **Gameplay Systems**
-   - Implement psychological influence mechanics
-   - Add reality manipulation abilities
-   - Create consciousness-based puzzles
-
-2. **Content Creation**
-   - Design psychological environments
-   - Create NPC personality profiles
-   - Develop consciousness-based quests
-
-3. **Polish**
-   - Add visual effects for psychological states
-   - Implement sound design for resonance
-   - Create UI for psychological tracking
-
-## Technical Architecture
-
-### Key Components
-1. **Personality System**
-```cpp
-class PersonalityProfile {
-    // Core traits and states
-    EnneagramType primary_type;
-    DSMDimensions dsm_traits;
-    CoreTraits core_traits;
-    
-    // Psychological systems
-    ResonanceState resonance_state;
-    PerceptionLayer perception_layer;
-    InnerTruth inner_truth;
-    
-    // Integration metrics
-    float consciousness_integration;
-    float reality_integration;
-};
-```
-
-2. **World Generation**
-```cpp
-class WorldSystem {
-    // Room generation
-    std::vector<Room> rooms;
-    TileMap* tilemap;
-    
-    // Object placement
-    std::vector<PlaceableObject> objects;
-    float object_density;
-    
-    // NPC management
-    std::vector<NPCData> npcs;
-    int min_npcs_per_room;
-    int max_npcs_per_room;
-};
-```
-
-3. **Visual Effects System**
-```cpp
-class VisualEffectsManager {
-    // Core components
-    RealitySystem* reality_system;
-    ShaderMaterial* shader_material;
-    
-    // Effect management
-    std::map<String, EffectParameters> active_effects;
-    float global_distortion_intensity;
-    
-    // Effect parameters
-    struct EffectParameters {
-        float intensity;
-        float duration;
-        float elapsed_time;
-        Dictionary properties;
-        bool active;
-    };
-};
-```
-
-4. **Testing Infrastructure**
-```gdscript
-class TestRunner:
-    # Test tracking
-    var total_tests: int
-    var passed_tests: int
-    var failed_tests: int
-    
-    # Test suites
-    var reality_tests: RealitySystemTests
-    var effects_tests: VisualEffectsTests
-    
-    # Logging system
-    var logger: TestLogger
-    
-    # Mock objects
-    var mock_reality_system: MockRealitySystem
-    var mock_visual_effects: MockVisualEffectsManager
-```
-
-### Test Organization
-1. **Reality System Tests**
-   - Anomaly creation and removal
-   - Consciousness field management
-   - Multiple entity handling
-   - State validation
-
-2. **Visual Effects Tests**
-   - Effect start/stop functionality
-   - Global intensity control
-   - Multiple effect management
-   - Parameter validation
-
-3. **Mock Objects**
-   - `MockRealitySystem`: Simulates reality manipulation
-   - `MockVisualEffectsManager`: Handles visual effect testing
-   - State reset between tests
-   - Signal emission for test events
-
-4. **Test Infrastructure**
-   - Automated test execution
-   - Comprehensive logging
-   - State cleanup between tests
-   - Asynchronous operation support
-   - Headless testing capability
-
-### Data Flow
-1. Personality states influence world generation
-2. Environmental factors affect psychological states
-3. NPC interactions modify resonance levels
-4. Collective consciousness shapes reality
-5. Visual effects reflect psychological states
-6. Test results validate system integrity
-
-## Development Roadmap
-
-### Phase 1 (Completed)
-- Core personality system implementation
-- Basic world generation
-- Player mechanics
-
-### Phase 2 (Current)
-- Psychological resonance mechanics
-- Reality perception system
-- NPC consciousness integration
-
-### Phase 3 (Planned)
-- Advanced reality manipulation
-- Collective consciousness events
-- Environmental response system
-
-### Phase 4 (Future)
-- Quest system integration
-- Advanced NPC behaviors
-- Visual and audio polish
-
-## Design Principles
-1. Psychological depth over complexity
-2. Meaningful player choice and consequence
-3. Emergent narrative through psychological states
-4. Subtle but impactful reality manipulation
-5. Collective consciousness as a core mechanic
-
-## Performance Considerations
-1. Efficient psychological state updates
-2. Optimized reality distortion calculations
-3. Scalable NPC consciousness simulation
-4. Memory-efficient world generation
-
-## Current Structure
-
-### Core Systems
-- `WorldSystem`: Manages world generation, room creation, and object placement
-- `TileMapManager`: Handles tile-based operations and collision layers
-- `Constants`: Global enums and configuration values
-
-### Scene Hierarchy
-```
-scenes/
-├── Main.tscn (Root scene)
-│   ├── WorldSystem
-│   │   └── TileMap
-│   ├── Player
-│   └── UI
-│       ├── StaminaBar
-│       └── DebugOverlay
-├── objects/
-│   ├── base_object.tscn (Base interactable object)
-│   ├── container.tscn
-│   ├── workbench.tscn
-│   ├── crate.tscn
-│   ├── lamp.tscn
-│   └── plant.tscn
-└── npc.tscn
-```
-
-### Scripts Organization
-```
-scripts/
-├── main.gd (Main game controller)
-├── world_system.gd (World generation and management)
-├── tilemap_manager.gd (Tile-based operations)
-├── player.gd (Player movement and interactions)
-├── base_object.gd (Base interactable behavior)
-├── container.gd (Container-specific behavior)
-├── npc.gd (NPC behavior and dialogue)
-├── constants.gd (Global enums and constants)
-└── debug_overlay.gd (Debug visualization)
-```
-
-### Physics Layers
-1. World (Layer 1): Static environment
-2. Player (Layer 2): Player character
-3. Interactable (Layer 3): Objects that can be interacted with
-4. NPC (Layer 4): Non-player characters
-
-## Future Expansions
-
-### LLM Integration
-1. Dialogue System
-   - Dynamic NPC conversations using LLM
-   - Context-aware responses based on game state
-   - Memory system for conversation history
-   - Emotion and personality modeling
-
-2. Quest Generation
-   - Procedural quest generation using LLM
-   - Dynamic objectives based on player actions
-   - Adaptive difficulty scaling
-   - Multi-path quest resolution
-
-3. Environmental Storytelling
-   - Dynamic object descriptions
-   - Contextual world building
-   - Adaptive narrative elements
-
-### Visual Enhancements
-1. Lighting System
-   - Dynamic shadows
-   - Day/night cycle
-   - Light sources with unique properties
-   - Visual effects for different states
-
-2. Particle Systems
-   - Environmental particles
-   - Interaction feedback
-   - Status effects
-   - Weather system
-
-3. UI/UX Improvements
-   - Minimalist HUD
-   - Context-sensitive prompts
-   - Smooth transitions
-   - Accessibility options
-
-### Sound Design
-1. Ambient System
-   - Dynamic background music
-   - Environmental sounds
-   - Weather effects
-   - Time-based variations
-
-2. Interaction Audio
-   - Object-specific sounds
-   - Footsteps system
-   - Impact sounds
-   - Voice system for NPCs
-
-3. Spatial Audio
-   - 3D sound positioning
-   - Sound occlusion
-   - Reverb zones
-   - Distance-based effects
-
-### Gameplay Extensions
-1. Reality Manipulation
-   - Time manipulation
-   - Space distortion
-   - Object state changes
-   - Environmental puzzles
-
-2. Advanced AI
-   - NPC pathfinding
-   - Behavior trees
-   - Group dynamics
-   - Learning patterns
-
-3. Player Progression
-   - Skill system
-   - Equipment upgrades
-   - Knowledge accumulation
-   - Reality manipulation powers
-
-4. World Interaction
-   - Complex object interactions
-   - Environmental hazards
-   - Dynamic weather effects
-   - Time-based events
-
-## Implementation Priorities
-1. Core Systems Stabilization
-   - Fix remaining bugs
-   - Optimize performance
-   - Complete base interactions
-   - Establish testing framework
-
-2. LLM Integration (Phase 1)
-   - Basic dialogue system
-   - Simple quest generation
-   - Object descriptions
-   - Context management
-
-3. Visual and Audio Foundation
-   - Basic lighting system
-   - Essential sound effects
-   - UI improvements
-   - Particle effects
-
-4. Gameplay Mechanics
-   - Basic reality manipulation
-   - Simple NPC AI
-   - Core progression system
+1. **Feature Implementation**
+   - Advanced NPC behaviors
    - Environmental interactions
+   - Quest system integration
+   - UI/UX improvements
 
-5. Advanced Features
-   - Complex LLM interactions
-   - Advanced visual effects
-   - Spatial audio
-   - Advanced AI behaviors
+2. **System Refinement**
+   - Performance optimization
+   - Memory usage reduction
+   - Test coverage expansion
+   - Documentation enhancement
 
 ## Development Guidelines
-1. Code Structure
-   - Use dependency injection
+
+1. **Code Quality**
    - Follow SOLID principles
-   - Implement proper error handling
-   - Maintain clear documentation
+   - Maintain clean architecture
+   - Write comprehensive tests
+   - Document all public APIs
 
-2. Scene Organization
-   - Keep scenes modular
-   - Use scene inheritance
-   - Maintain clear node hierarchy
-   - Follow naming conventions
+2. **Performance**
+   - Profile critical paths
+   - Optimize memory usage
+   - Minimize allocations
+   - Cache-friendly data structures
 
-3. Resource Management
-   - Optimize asset loading
-   - Use resource preloading
-   - Implement proper cleanup
-   - Monitor memory usage
+3. **Testing**
+   - Write tests first (TDD)
+   - Cover edge cases
+   - Validate memory usage
+   - Benchmark performance
 
-4. Testing
-   - Unit tests for core systems
-   - Integration tests for LLM features
-   - Performance benchmarks
-   - User experience testing
+4. **Documentation**
+   - Keep docs up-to-date
+   - Document design decisions
+   - Include usage examples
+   - Note performance characteristics
 
 ## System Overview
 
@@ -601,3 +422,252 @@ shadow-worker/
 - Extended environment interaction
 - Additional psychological elements
 - Performance optimizations
+
+graph TD
+    subgraph Project Structure
+        Root --> Resources
+        Root --> Source
+        Root --> Documentation
+        Root --> External
+
+        Resources --> Maps
+        Maps --> RoomTemplates
+        RoomTemplates --> BasicRoom[basic_room.json]
+
+        Source --> Core
+        Source --> Systems
+        Source --> Entities
+        Source --> UI
+
+        Core --> World
+        Core --> Estate
+        Core --> ResourceManager
+        Core --> Camera
+
+        Systems --> InputSystem
+        Systems --> SoundSystem
+        Systems --> RenderSystem
+        Systems --> PhysicsSystem
+        Systems --> PsychologicalSystem
+
+        Entities --> Player
+        Entities --> NPCs
+        Entities --> Objects
+        Entities --> Environment
+
+        Documentation --> Architecture
+        Documentation --> API
+        Documentation --> Setup
+
+        External --> Raylib
+    end
+
+    subgraph Data Structures
+        World --> |contains| Tiles
+        World --> |manages| EntityPool
+        World --> |uses| Resources
+        World --> |controls| Camera
+        World --> |tracks| Resonance
+
+        Estate --> |contains| World
+        Estate --> |manages| SpawnPoints
+        Estate --> |controls| Generation
+    end
+
+    subgraph Room Template Structure
+        RoomDef[Room Definition] --> Layers
+        RoomDef --> SpawnPoints
+        RoomDef --> Connections
+        RoomDef --> ResonancePoints
+        RoomDef --> Properties
+
+        Layers --> Background
+        Layers --> Main
+        Layers --> Foreground
+
+        Properties --> AmbientResonance
+        Properties --> ShadowIntensity
+        Properties --> PsychologicalThreshold
+    end
+```
+
+## Tile System
+The tile system is a core component that handles world rendering and tile management:
+
+#### Components
+1. **Chunk Manager**
+   - Handles 16x16 tile chunks
+   - LRU cache with 64 chunk capacity
+   - Automatic chunk loading/unloading
+   - Texture caching for rendered chunks
+
+2. **Viewport Culling**
+   - Camera-based viewport tracking
+   - Dynamic chunk loading based on visibility
+   - Efficient grid-based calculations
+   - Automatic dirty state management
+
+3. **Property System**
+   - Lightweight TMX-inspired properties
+   - JSON-based custom properties
+   - Core property set (walkable, destructible, etc.)
+   - Dynamic memory management
+
+4. **Integration Points**
+   - World System: Chunk updates and tile state
+   - Resource Manager: Texture handling
+   - Physics System: Collision detection
+   - Entity System: Object placement
+
+### World Generation
+- Procedural estate generation
+- Room template system
+- Object placement
+- Spawn point management
+
+### Entity System
+- Component-based architecture
+- Dynamic entity pooling
+- Collision detection
+- State management
+
+### Resource Management
+- Texture loading and caching
+- Sound management
+- Memory optimization
+- Asset tracking
+
+## Data Flow
+
+```mermaid
+graph TD
+    A[World System] --> B[Chunk Manager]
+    B --> C[Viewport Culling]
+    C --> D[Renderer]
+    A --> E[Entity System]
+    E --> D
+    F[Resource Manager] --> B
+    F --> E
+```
+
+## Memory Management
+
+### Tile System
+- Chunk textures: ~16KB per chunk
+- Maximum cache: ~1MB (64 chunks)
+- Custom properties: Dynamic allocation
+- Viewport tracking: Negligible
+
+### Entity System
+- Entity pool: Pre-allocated
+- Components: Cache-aligned
+- State data: Dynamic
+
+### Resource System
+- Texture cache: Managed size
+- Sound buffers: Streaming
+- Asset references: Pooled
+
+## Performance Considerations
+
+### Rendering Pipeline
+1. Viewport calculation
+2. Chunk visibility check
+3. Cache management
+4. Texture rendering
+
+### Memory Hierarchy
+1. Active chunks (hot)
+2. Entity data (warm)
+3. Resource cache (cool)
+4. Template data (cold)
+
+### Optimization Strategies
+1. Chunk size tuning
+2. Cache policy adjustment
+3. Property compression
+4. Batch rendering
+
+## Future Extensibility
+
+### Planned Features
+1. Multi-threaded chunk updates
+2. Dynamic chunk sizing
+3. Property inheritance
+4. Compressed texture cache
+
+### Integration Points
+1. Lighting system
+2. Particle effects
+3. Weather system
+4. Dynamic objects
+
+# Architecture Documentation
+
+## Core Systems
+
+### Map System
+The map system manages the game world's tile-based environment and object placement. Key components include:
+
+- **TileMap**: Represents the game world grid with properties for each tile
+- **MapSystem**: Manages map rendering, object placement, and chunk-based optimization
+- **ChunkCache**: Implements efficient tile rendering through cached chunks
+- **MapObjects**: Handles placement and management of interactive objects in the world
+
+### Entity System
+The entity system uses a component-based architecture for game objects:
+
+- **EntityPool**: Manages entity lifecycle and provides efficient entity lookup
+- **Components**: Modular pieces that define entity behavior
+  - Transform: Position, rotation, and scale
+  - Physics: Movement and collision
+  - Render: Visual representation
+  - Collider: Collision detection
+  - AI: Non-player character behavior
+  - PlayerControl: Player input handling
+
+### Resource Management
+The resource manager handles all game assets:
+
+- **ResourceManager**: Central system for loading and managing game resources
+- **TextureManager**: Handles texture loading and region management
+- **SoundManager**: Manages audio resources and playback
+- **FontManager**: Handles text rendering resources
+- **ShaderManager**: Manages shader programs
+
+## System Interactions
+
+### Map-Entity Interaction
+- Entities can interact with map objects through collision detection
+- Map system provides spatial partitioning for efficient entity queries
+- Object placement affects pathfinding and AI behavior
+
+### Resource-Entity Binding
+- Entities reference resources through the resource manager
+- Dynamic resource loading based on entity requirements
+- Resource sharing between similar entities
+
+## Optimization Strategies
+
+### Chunk-based Rendering
+- Map divided into chunks for efficient rendering
+- Only visible chunks are processed and rendered
+- Chunk cache maintains recently used map sections
+
+### Entity Pool Management
+- Object pooling for efficient entity creation/destruction
+- Spatial partitioning for collision detection
+- Component-based architecture for memory efficiency
+
+### Resource Management
+- Lazy loading of resources
+- Resource sharing between entities
+- Automatic resource cleanup
+
+## Future Considerations
+
+### Planned Improvements
+- Enhanced chunk management for large maps
+- Dynamic resource streaming
+- Advanced entity component system
+- Improved collision detection algorithms
