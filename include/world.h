@@ -1,114 +1,104 @@
-#ifndef SHADOW_WORKER_WORLD_H
-#define SHADOW_WORKER_WORLD_H
+#ifndef WORLD_H
+#define WORLD_H
 
 #include <raylib.h>
-#include <raymath.h>
 #include <stdbool.h>
-#include "resource_manager.h"
-#include "entity.h"
+#include "entity_types.h"
+#include "map_types.h"
+#include "constants.h"
 
 // Forward declarations
-struct World;
-typedef struct World World;
-struct EstateMap;
-typedef struct EstateMap EstateMap;
+struct EntityPool;
+struct ComponentRegistry;
+struct MapSystem;
+struct ResourceManager;
 
-// World configuration
-#define ESTATE_WIDTH 50  // Larger than screen width
-#define ESTATE_HEIGHT 40 // Larger than screen height
-#define TILE_SIZE 32
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 720
-#define MAX_SPAWN_POINTS 32
+#define MAX_SPAWN_POINTS 16
 
-// Map structure
-typedef struct EstateMap {
-    World* world;
-    Texture2D tileset;
-    Vector2 spawnPoints[MAX_SPAWN_POINTS];
-    int spawnPointCount;
-} EstateMap;
-
-// Tile types for estate
-typedef enum TileType {
-    TILE_GRASS,
-    TILE_PATH,
-    TILE_WATER,
-    TILE_WALL,
-    TILE_FLOOR,
-    TILE_COLUMN,
-    TILE_TREE,
-    TILE_BUSH,
-    TILE_FLOWER,
-    TILE_FOUNTAIN,
-    TILE_STATUE,
-    TILE_COUNT
-} TileType;
-
-// Tile properties
-typedef struct TileProperties {
-    bool isSolid;
-    bool isWater;
-    bool isInteractive;
-    Rectangle textureRect;  // Source rectangle in tileset
-    const char* textureName;
-} TileProperties;
-
-// Object types
-typedef enum ObjectType {
-    OBJECT_NONE = 0,
-    OBJECT_TREE = 1,
-    OBJECT_BUSH = 2,
-    OBJECT_FLOWER = 3,
-    OBJECT_FOUNTAIN = 4
-} ObjectType;
+// World textures structure
+typedef struct WorldTextures {
+    Texture2D tilesetTexture;
+    Texture2D playerTexture;
+    Texture2D npcTexture;
+} WorldTextures;
 
 // World structure
-struct World {
-    TileType* tiles;
-    TileProperties* tileProperties;
-    ObjectType* objects;       // Array of objects in the world
+typedef struct World {
     Vector2 dimensions;
-    EntityPool* entityPool;
-    ResourceManager* resources;
-    float deltaTime;
-    Camera2D* camera;
-    Rectangle bounds;
-    float globalResonance;
-    float instabilityLevel;
-    bool isStable;
-    Vector2* spawnPoints;      // NPC spawn locations
-    int spawnPointCount;       // Number of spawn points
-};
+    float gravity;
+    float friction;
+    int width;
+    int height;
+    int tileSize;
+    int spawnPointCount;
+    Vector2 spawnPoints[MAX_SPAWN_POINTS];
+    struct TileProperties* tileProperties;
+    Camera2D camera;
+    WorldTextures textures;
+    Tile* tiles;
+    struct ResourceManager* resourceManager;
+    struct EntityPool* entityPool;
+    struct MapSystem* mapSystem;
+} World;
 
-// Function declarations
-World* InitWorld(ResourceManager* resources);
-void UpdateWorld(World* world, float deltaTime);
-void DrawWorld(World* world);
-void UnloadWorld(World* world);
+// World state structure
+typedef struct WorldState {
+    World* world;
+    struct EntityPool* entityPool;
+    struct ComponentRegistry* registry;
+    struct MapSystem* mapSystem;
+    struct ResourceManager* textureManager;
+    Camera2D camera;
+} WorldState;
 
-// Tile management
-TileType GetTileAt(World* world, int x, int y);
-void SetTileAt(World* world, int x, int y, TileType type);
-bool IsTileSolid(World* world, int x, int y);
-Vector2 GetTilePosition(int x, int y);
-void GenerateEstateMap(World* world);
+// World management functions
+WorldState* CreateWorldState(void);
+void DestroyWorldState(WorldState* state);
+void UnloadWorldState(WorldState* state);
+void DestroyWorldStateAndResources(WorldState* state);
+
+// World state management
+void UpdateWorld(WorldState* state, float deltaTime);
+void DrawWorld(WorldState* state);
 
 // Object management
-ObjectType GetObjectAt(World* world, int x, int y);
-void SetObjectAt(World* world, int x, int y, ObjectType type);
+void AddObject(World* world, ObjectType type, Vector2 position);
+void RemoveObject(World* world, Vector2 position);
+void UpdateObjects(World* world, float deltaTime);
+
+// World state management
+void SaveWorldState(WorldState* state, const char* filename);
+void LoadWorldState(WorldState* state, const char* filename);
+
+// Map system functions
+void UpdateMapSystem(World* world, float deltaTime);
+void DrawMapSystem(struct MapSystem* mapSystem);
+void AddMapObject(struct MapSystem* mapSystem, ObjectType type, Vector2 position);
+void RemoveMapObject(struct MapSystem* mapSystem, Vector2 position);
+void UpdateMapObjects(struct MapSystem* mapSystem, float deltaTime);
+void SaveMapSystem(struct MapSystem* mapSystem, const char* filename);
+void LoadMapSystem(struct MapSystem* mapSystem, const char* filename);
+
+// Tile management
+void SetTile(World* world, int x, int y, TileType tileType);
+TileType GetTile(World* world, int x, int y);
+bool IsWalkable(const World* world, Vector2 position);
+bool IsWalkableGrid(const World* world, int x, int y);
 
 // Spawn point management
-bool IsValidSpawnPoint(World* world, Vector2 position);
+void AddSpawnPoint(World* world, Vector2 position);
 Vector2 GetRandomSpawnPoint(World* world);
 
-// Collision handling
-bool CheckCollision(World* world, Rectangle bounds);
+// Debug functions
+void DrawWorldDebug(World* world);
+void DrawCollisionDebug(World* world);
 
-// Debug
-void DebugDrawWorld(World* world);
+// World state management
+World* CreateWorld(int width, int height, float gravity, struct ResourceManager* resourceManager);
+void DestroyWorld(World* world);
 
-// Global world instance getter
-World* GetWorld(void);
+// Tile management
+void SetTileAt(World* world, int x, int y, Tile tile);
+Tile GetTileAt(World* world, int x, int y);
 
-#endif // SHADOW_WORKER_WORLD_H 
+#endif // WORLD_H

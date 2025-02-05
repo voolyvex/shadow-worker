@@ -29,22 +29,31 @@ typedef struct ResourceManager {
     MusicResource* music;
     FontResource* fonts;
     ShaderResource* shaders;
-    int textureCount;
-    int waveCount;
-    int musicCount;
-    int fontCount;
-    int shaderCount;
-    int textureCapacity;
-    int waveCapacity;
-    int musicCapacity;
-    int fontCapacity;
-    int shaderCapacity;
+    size_t textureCount;
+    size_t waveCount;
+    size_t musicCount;
+    size_t fontCount;
+    size_t shaderCount;
+    size_t textureCapacity;
+    size_t waveCapacity;
+    size_t musicCapacity;
+    size_t fontCapacity;
+    size_t shaderCapacity;
     bool initialized;
 } ResourceManager;
 
 // Resource manager functions
+ResourceManager* GetResourceManager(void);
 ResourceManager* CreateResourceManager(void);
 void DestroyResourceManager(ResourceManager* manager);
+void UnloadResourceManager(void);
+void UnloadAllResources(ResourceManager* manager);
+void ReloadAllResources(ResourceManager* manager);
+
+// Generic resource functions
+void* GetResource(ResourceManager* manager, const char* name);
+void UnloadResource(ResourceManager* manager, const char* name);
+bool LoadResource(ResourceManager* manager, const char* name, const char* filename);
 
 // Resource loading functions
 bool LoadGameTexture(ResourceManager* manager, const char* filename, const char* name);
@@ -60,18 +69,17 @@ void UnloadGameMusic(ResourceManager* manager, const char* name);
 void UnloadGameFont(ResourceManager* manager, const char* name);
 void UnloadGameShader(ResourceManager* manager, const char* name);
 
-// Resource retrieval functions
-Texture2D* GetGameTexture(ResourceManager* manager, const char* name);
-Wave* GetGameWave(ResourceManager* manager, const char* name);
-Music* GetGameMusic(ResourceManager* manager, const char* name);
-Font* GetGameFont(ResourceManager* manager, const char* name);
-Shader* GetGameShader(ResourceManager* manager, const char* name);
+// Resource retrieval functions - updated to be const-correct
+const Texture2D* GetGameTexture(const ResourceManager* manager, const char* name);
+const Wave* GetGameWave(const ResourceManager* manager, const char* name);
+const Music* GetGameMusic(const ResourceManager* manager, const char* name);
+const Font* GetGameFont(const ResourceManager* manager, const char* name);
+const Shader* GetGameShader(const ResourceManager* manager, const char* name);
+const Sound* GetGameSound(const ResourceManager* manager, const char* name);
 
 // Resource management functions
-void UnloadAllResources(ResourceManager* manager);
-void ReloadAllResources(ResourceManager* manager);
-bool IsResourceLoaded(ResourceManager* manager, const char* name);
-int GetResourceCount(ResourceManager* manager);
+bool IsResourceLoaded(const ResourceManager* manager, const char* name);
+size_t GetResourceCount(const ResourceManager* manager);
 
 // Resource addition functions
 bool AddGameTexture(ResourceManager* manager, const char* filename, const char* name);

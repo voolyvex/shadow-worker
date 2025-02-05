@@ -2,6 +2,7 @@
 #define SHADOW_WORKER_PLAYER_H
 
 #include <raylib.h>
+#include "../../include/world.h"
 
 typedef struct PlayerData {
     Vector2 position;
@@ -19,5 +20,7 @@ PlayerData* CreatePlayer(void);
 void DestroyPlayer(void);
 void UpdatePlayer(float deltaTime);
 void DrawPlayer(void);
+float PlayerClamp(float value, float min, float max);
+Vector2 GetPlayerPosition(const World* world);
 
 #endif // SHADOW_WORKER_PLAYER_H 

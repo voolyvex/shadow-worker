@@ -10,6 +10,7 @@
 
 // Forward declarations
 struct World;
+struct MapSystem;
 
 // Object types that can be placed in the world
 typedef enum {
@@ -41,6 +42,24 @@ typedef struct {
     ObjectType objectType;
     TileProperties properties;
 } Tile;
+
+// Create a tile with default properties
+static inline Tile CreateTile(TileType type, ObjectType objectType) {
+    Tile tile = {
+        .type = type,
+        .objectType = objectType,
+        .properties = {
+            .isWalkable = true,
+            .isDestructible = false,
+            .isInteractive = false,
+            .friction = 1.0f,
+            .resonance = 0.0f,
+            .color = WHITE,
+            .customProperties = NULL
+        }
+    };
+    return tile;
+}
 
 // Cached chunk for rendering optimization
 typedef struct {
@@ -90,5 +109,7 @@ typedef struct {
     bool enableCulling;
     TileProperties* properties;  // Array of properties for the map
 } TileMap;
+
+// Map system structure is defined in map_system.h
 
 #endif // MAP_TYPES_H 

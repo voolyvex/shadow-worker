@@ -11,11 +11,7 @@
 World* GetWorld(void);
 
 // Helper function declarations
-static float Clamp(float value, float min, float max) {
-    if (value < min) return min;
-    if (value > max) return max;
-    return value;
-}
+float PlayerClamp(float value, float min, float max);
 
 static PlayerData* player = NULL;
 
@@ -103,9 +99,9 @@ void UpdatePlayer(float deltaTime) {
     
     // Update stamina
     if (player->isMoving) {
-        player->stamina = (int)Clamp((float)player->stamina - 10.0f * deltaTime, 0.0f, 100.0f);
+        player->stamina = (int)PlayerClamp((float)player->stamina - 10.0f * deltaTime, 0.0f, 100.0f);
     } else {
-        player->stamina = (int)Clamp((float)player->stamina + 20.0f * deltaTime, 0.0f, 100.0f);
+        player->stamina = (int)PlayerClamp((float)player->stamina + 20.0f * deltaTime, 0.0f, 100.0f);
     }
 }
 
@@ -121,4 +117,15 @@ void DrawPlayer(void) {
     DrawText(TextFormat("Stamina: %d", player->stamina), 10, 30, 20, WHITE);
     DrawText(TextFormat("Resonance: %d", player->resonance), 10, 50, 20, WHITE);
     #endif
+}
+
+float PlayerClamp(float value, float min, float max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
+
+Vector2 GetPlayerPosition(const struct World* world) {
+    if (!player) return (Vector2){0.0f, 0.0f};
+    return player->position;
 } 

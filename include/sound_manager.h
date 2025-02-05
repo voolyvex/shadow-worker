@@ -15,8 +15,9 @@ typedef enum SoundType {
 // Sound manager structure
 typedef struct SoundManager {
     Music* currentMusic;
+    float masterVolume;
     float musicVolume;
-    float soundVolume;
+    float effectsVolume;
     bool isMusicEnabled;
     bool isSoundEnabled;
 } SoundManager;

@@ -1,9 +1,19 @@
+#include "../../include/warning_suppression.h"
+
+BEGIN_EXTERNAL_WARNINGS
+
+// External includes
+#include <raylib.h>
+#include <raymath.h>
+
+END_EXTERNAL_WARNINGS
+
 #include "../../include/sound_manager.h"
 #include "../../include/resource_manager.h"
 #include "logger.h"
 #include <stdlib.h>
-#include <raylib.h>
 #include <stdio.h>
+#include <string.h>
 
 static SoundManager soundManager = {0};
 static bool isInitialized = false;
@@ -26,27 +36,29 @@ bool InitSoundManager(void) {
     LOG_INFO(LOG_AUDIO, "Initializing sound manager");
     Logger_BeginTimer("sound_manager_init");
     
-    // Initialize audio device with specific settings
-    SetAudioStreamBufferSizeDefault(4096);
+    // Initialize audio device
     InitAudioDevice();
-    
     if (!IsAudioDeviceReady()) {
         LOG_ERROR(LOG_AUDIO, "Failed to initialize audio device");
-        Logger_EndTimer("sound_manager_init");
         return false;
     }
+    LOG_INFO(LOG_AUDIO, "Audio device initialized successfully");
     
+    // Set audio configuration
     SetMasterVolume(1.0f);
     
-    soundManager.currentMusic = NULL;
+    // Initialize sound manager state
+    memset(&soundManager, 0, sizeof(SoundManager));
+    soundManager.masterVolume = 1.0f;
     soundManager.musicVolume = 1.0f;
-    soundManager.soundVolume = 1.0f;
-    soundManager.isMusicEnabled = true;
-    soundManager.isSoundEnabled = true;
+    soundManager.effectsVolume = 1.0f;
+    soundManager.currentMusic = NULL;
     
     isInitialized = true;
+    
     Logger_EndTimer("sound_manager_init");
     LOG_INFO(LOG_AUDIO, "Sound manager initialized successfully");
+    
     return true;
 }
 
@@ -89,11 +101,12 @@ void PlayGameSound(SoundType type) {
     
     Logger_BeginTimer("sound_play");
     
-    Sound* sound = GetWave(soundName);
+    // Get cached sound from resource manager instead of loading every time
+    const Sound* sound = GetGameSound(GetResourceManager(), soundName);
     if (sound && sound->frameCount > 0) {
-        SetSoundVolume(*sound, soundManager.soundVolume);
+        SetSoundVolume(*sound, soundManager.effectsVolume);
         PlaySound(*sound);
-        LOG_DEBUG(LOG_AUDIO, "Playing sound: %s (volume: %.2f)", soundName, soundManager.soundVolume);
+        LOG_DEBUG(LOG_AUDIO, "Playing sound: %s (volume: %.2f)", soundName, soundManager.effectsVolume);
     } else {
         LOG_ERROR(LOG_AUDIO, "Failed to play sound '%s' - sound not loaded or invalid", soundName);
     }
@@ -170,7 +183,7 @@ void SetGameSoundVolume(float volume) {
     }
     
     LOG_DEBUG(LOG_AUDIO, "Setting sound volume: %.2f", volume);
-    soundManager.soundVolume = volume;
+    soundManager.effectsVolume = volume;
     SetMasterVolume(volume);
 }
 

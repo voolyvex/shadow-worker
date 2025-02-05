@@ -1,30 +1,30 @@
 #include <stdio.h>
 #include "include/test_suites.h"
-#include "../include/logger.h"
 
 int main(void) {
-    // Initialize logging
-    if (!Logger_Init("test_log.txt")) {
-        fprintf(stderr, "Failed to initialize logger\n");
-        return 1;
-    }
-
-    LOG_INFO(LOG_CORE, "=== Starting Shadow Worker Test Suite ===");
-
-    // Setup test environment
+    int failures = 0;
+    
+    printf("=================================\n");
+    printf("   Shadow Worker Test Suite\n");
+    printf("=================================\n");
+    
     setup_test_environment();
-
-    // Run test suites
-    run_core_system_tests();
-    run_world_tests();
-    run_map_tests();
-    run_memory_tests();
-
-    // Cleanup
+    
+    // Temporarily skip resource manager tests
+    // RUN_TEST_SUITE(run_resource_manager_tests);
+    RUN_TEST_SUITE(run_core_system_tests);
+    RUN_TEST_SUITE(run_world_tests);
+    RUN_TEST_SUITE(run_map_tests);
+    RUN_TEST_SUITE(run_memory_tests);
+    RUN_TEST_SUITE(run_integration_tests);
+    RUN_TEST_SUITE(run_texture_manager_tests);
+    
     teardown_test_environment();
-
-    LOG_INFO(LOG_CORE, "=== Test Suite Completed ===");
-    Logger_Shutdown();
-
-    return 0;
+    
+    printf("\n=================================\n");
+    printf("Test Summary:\n");
+    printf("Total failures: %d\n", failures);
+    printf("=================================\n");
+    
+    return failures ? 1 : 0;
 } 

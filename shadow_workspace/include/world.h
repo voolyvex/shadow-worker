@@ -4,17 +4,16 @@
 #include <raylib.h>
 #include <stdbool.h>
 #include "entity_types.h"
-#include "entity_pool.h"
 #include "map_types.h"
-#include "map_system.h"
-#include "resource_manager.h"
 #include "constants.h"
 
 // Forward declarations
 struct EntityPool;
 struct ComponentRegistry;
 struct MapSystem;
-struct TileProperties;
+struct ResourceManager;
+
+#define MAX_SPAWN_POINTS 16
 
 // World textures structure
 typedef struct WorldTextures {
@@ -31,23 +30,24 @@ typedef struct World {
     int width;
     int height;
     int tileSize;
-    int spawnCount;
+    int spawnPointCount;
     Vector2 spawnPoints[MAX_SPAWN_POINTS];
     struct TileProperties* tileProperties;
     Camera2D camera;
     WorldTextures textures;
     Tile* tiles;
-    ResourceManager* resourceManager;
-    EntityPool* entityPool;
+    struct ResourceManager* resourceManager;
+    struct EntityPool* entityPool;
+    struct MapSystem* mapSystem;
 } World;
 
 // World state structure
 typedef struct WorldState {
     World* world;
-    EntityPool* entityPool;
-    ComponentRegistry* registry;
-    MapSystem* mapSystem;
-    ResourceManager* textureManager;
+    struct EntityPool* entityPool;
+    struct ComponentRegistry* registry;
+    struct MapSystem* mapSystem;
+    struct ResourceManager* textureManager;
     Camera2D camera;
 } WorldState;
 
@@ -71,18 +71,19 @@ void SaveWorldState(WorldState* state, const char* filename);
 void LoadWorldState(WorldState* state, const char* filename);
 
 // Map system functions
-void UpdateMapSystem(MapSystem* mapSystem, float deltaTime);
-void DrawMapSystem(MapSystem* mapSystem);
-void AddMapObject(MapSystem* mapSystem, ObjectType type, Vector2 position);
-void RemoveMapObject(MapSystem* mapSystem, Vector2 position);
-void UpdateMapObjects(MapSystem* mapSystem, float deltaTime);
-void SaveMapSystem(MapSystem* mapSystem, const char* filename);
-void LoadMapSystem(MapSystem* mapSystem, const char* filename);
+void UpdateMapSystem(World* world, float deltaTime);
+void DrawMapSystem(struct MapSystem* mapSystem);
+void AddMapObject(struct MapSystem* mapSystem, ObjectType type, Vector2 position);
+void RemoveMapObject(struct MapSystem* mapSystem, Vector2 position);
+void UpdateMapObjects(struct MapSystem* mapSystem, float deltaTime);
+void SaveMapSystem(struct MapSystem* mapSystem, const char* filename);
+void LoadMapSystem(struct MapSystem* mapSystem, const char* filename);
 
 // Tile management
 void SetTile(World* world, int x, int y, TileType tileType);
 TileType GetTile(World* world, int x, int y);
-bool IsWalkable(World* world, int x, int y);
+bool IsWalkable(const World* world, Vector2 position);
+bool IsWalkableGrid(const World* world, int x, int y);
 
 // Spawn point management
 void AddSpawnPoint(World* world, Vector2 position);
@@ -93,7 +94,7 @@ void DrawWorldDebug(World* world);
 void DrawCollisionDebug(World* world);
 
 // World state management
-World* CreateWorld(int width, int height, float gravity, ResourceManager* resourceManager);
+World* CreateWorld(int width, int height, float gravity, struct ResourceManager* resourceManager);
 void DestroyWorld(World* world);
 
 // Tile management

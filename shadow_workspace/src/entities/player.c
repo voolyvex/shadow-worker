@@ -123,4 +123,9 @@ float PlayerClamp(float value, float min, float max) {
     if (value < min) return min;
     if (value > max) return max;
     return value;
+}
+
+Vector2 GetPlayerPosition(const struct World* world) {
+    if (!player) return (Vector2){0.0f, 0.0f};
+    return player->position;
 } 

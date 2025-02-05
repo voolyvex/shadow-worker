@@ -11,9 +11,18 @@ bool InitMap(World* world);
 void UnloadMap(World* world);
 
 // Map tile and object access functions
-TileType GetMapTileAt(const World* world, int x, int y);
-void SetMapTileAt(World* world, int x, int y, TileType type);
+TileType GetTile(const World* world, int x, int y);
+void SetTile(World* world, int x, int y, TileType type);
 ObjectType GetMapObjectAt(const World* world, int x, int y);
 void SetMapObjectAt(World* world, int x, int y, ObjectType type);
+
+// Helper functions
+bool IsWalkable(const World* world, Vector2 position);
+bool IsWalkableGrid(const World* world, int x, int y);
+
+// Internal functions - not exposed in header
+static bool IsInBounds(int x, int y);
+static int GetIndex(int x, int y);
+static void* SafeAlloc(size_t size);
 
 #endif // MAP_H 

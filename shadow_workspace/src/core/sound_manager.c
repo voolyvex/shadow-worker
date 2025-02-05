@@ -1,8 +1,17 @@
+#include "../../include/warning_suppression.h"
+
+BEGIN_EXTERNAL_WARNINGS
+
+// External includes
+#include <raylib.h>
+#include <raymath.h>
+
+END_EXTERNAL_WARNINGS
+
 #include "../../include/sound_manager.h"
 #include "../../include/resource_manager.h"
 #include "logger.h"
 #include <stdlib.h>
-#include <raylib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -92,10 +101,11 @@ void PlayGameSound(SoundType type) {
     
     Logger_BeginTimer("sound_play");
     
-    Sound sound = LoadSound(soundName);
-    if (sound.frameCount > 0) {
-        SetSoundVolume(sound, soundManager.effectsVolume);
-        PlaySound(sound);
+    // Get cached sound from resource manager instead of loading every time
+    const Sound* sound = GetGameSound(GetResourceManager(), soundName);
+    if (sound && sound->frameCount > 0) {
+        SetSoundVolume(*sound, soundManager.effectsVolume);
+        PlaySound(*sound);
         LOG_DEBUG(LOG_AUDIO, "Playing sound: %s (volume: %.2f)", soundName, soundManager.effectsVolume);
     } else {
         LOG_ERROR(LOG_AUDIO, "Failed to play sound '%s' - sound not loaded or invalid", soundName);

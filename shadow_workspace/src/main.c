@@ -1,4 +1,13 @@
+#include "../include/warning_suppression.h"
+
+BEGIN_EXTERNAL_WARNINGS
+
+// External includes
 #include <raylib.h>
+#include <raymath.h>
+
+END_EXTERNAL_WARNINGS
+
 #include "../include/game.h"
 #include "../include/logger.h"
 

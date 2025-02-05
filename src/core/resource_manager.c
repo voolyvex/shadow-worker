@@ -61,8 +61,26 @@ static bool ValidateFileSize(const char* path, size_t maxSize) {
 }
 
 // Resource manager functions
-ResourceManager* GetResourceManager(void) {
-    return &g_resourceManager;
+ResourceManager* GetResourceManager() {
+    static ResourceManager manager = {0};
+    static bool initialized = false;
+    
+    if (!initialized) {
+        // Initialize arrays with safe defaults
+        manager.textures = (TextureResource*)calloc(MAX_TEXTURES, sizeof(TextureResource));
+        manager.waves = (WaveResource*)calloc(MAX_SOUNDS, sizeof(WaveResource));
+        manager.music = (MusicResource*)calloc(MAX_MUSIC, sizeof(MusicResource));
+        manager.fonts = (FontResource*)calloc(MAX_FONTS, sizeof(FontResource));
+        manager.shaders = (ShaderResource*)calloc(MAX_SHADERS, sizeof(ShaderResource));
+        
+        if (manager.textures && manager.waves && manager.music && 
+            manager.fonts && manager.shaders) {
+            manager.initialized = true;
+            initialized = true;
+        }
+    }
+    
+    return &manager;
 }
 
 ResourceManager* CreateResourceManager(void) {
@@ -151,22 +169,22 @@ void UnloadAllResources(ResourceManager* manager) {
     TraceLog(LOG_INFO, "Resource Manager unloaded");
 }
 
-bool LoadGameTexture(ResourceManager* manager, const char* filename, const char* name) {
-    if (!manager || !filename || !name || manager->textureCount >= manager->textureCapacity) return false;
-    
-    if (!FileExists(filename)) {
-        TraceLog(LOG_WARNING, "Texture file not found: %s", filename);
+bool LoadGameTexture(ResourceManager* manager, const char* path, const char* key) {
+    if (!manager || !manager->initialized || !path || !key) {
         return false;
     }
     
-    Texture2D texture = LoadTexture(filename);
+    if (manager->textureCount >= MAX_TEXTURES) {
+        return false;
+    }
+    
+    Texture2D texture = LoadTexture(path);
     if (texture.id == 0) {
-        TraceLog(LOG_ERROR, "Failed to load texture: %s", filename);
         return false;
     }
     
     manager->textures[manager->textureCount].texture = texture;
-    manager->textures[manager->textureCount].name = _strdup(name);
+    manager->textures[manager->textureCount].key = strdup(key);
     manager->textureCount++;
     
     return true;
@@ -328,13 +346,34 @@ void UnloadGameShader(ResourceManager* manager, const char* name) {
     
     for (int i = 0; i < manager->shaderCount; i++) {
         if (strcmp(manager->shaders[i].name, name) == 0) {
-            UnloadShader(manager->shaders[i].shader);
-            free((void*)manager->shaders[i].name);
-            
-            // Move remaining shaders up
-            for (int j = i; j < manager->shaderCount - 1; j++) {
-                manager->shaders[j] = manager->shaders[j + 1];
+            // Make sure we're not using the shader before unloading
+            if (manager->shaders[i].shader.id != 0) {
+                // Ensure we're not using this shader
+                if (IsShaderReady(manager->shaders[i].shader)) {
+                    UnloadShader(manager->shaders[i].shader);
+                }
+                manager->shaders[i].shader.id = 0;  // Mark as unloaded
+                manager->shaders[i].shader.locs = NULL;  // Clear shader locations
             }
+            
+            // Free the name string
+            if (manager->shaders[i].name) {
+                free((void*)manager->shaders[i].name);
+                manager->shaders[i].name = NULL;
+            }
+            
+            // Move remaining shaders up using memmove for better safety
+            if (i < manager->shaderCount - 1) {
+                memmove(&manager->shaders[i], 
+                       &manager->shaders[i + 1], 
+                       (manager->shaderCount - i - 1) * sizeof(ShaderResource));
+            }
+            
+            // Clear the last element since we've moved everything up
+            if (manager->shaderCount > 0) {
+                memset(&manager->shaders[manager->shaderCount - 1], 0, sizeof(ShaderResource));
+            }
+            
             manager->shaderCount--;
             break;
         }
@@ -495,4 +534,120 @@ const Sound* GetGameSound(const ResourceManager* manager, const char* name) {
     static Sound cachedSound;
     cachedSound = LoadSoundFromWave(*wave);
     return &cachedSound;
+}
+
+void* GetResource(ResourceManager* manager, const char* name) {
+    if (!manager || !name) return NULL;
+    
+    // Try to find in textures
+    for (int i = 0; i < manager->textureCount; i++) {
+        if (strcmp(manager->textures[i].name, name) == 0) {
+            return &manager->textures[i].texture;
+        }
+    }
+    
+    // Try to find in waves
+    for (int i = 0; i < manager->waveCount; i++) {
+        if (strcmp(manager->waves[i].name, name) == 0) {
+            return &manager->waves[i].wave;
+        }
+    }
+    
+    // Try to find in music
+    for (int i = 0; i < manager->musicCount; i++) {
+        if (strcmp(manager->music[i].name, name) == 0) {
+            return &manager->music[i].music;
+        }
+    }
+    
+    // Try to find in fonts
+    for (int i = 0; i < manager->fontCount; i++) {
+        if (strcmp(manager->fonts[i].name, name) == 0) {
+            return &manager->fonts[i].font;
+        }
+    }
+    
+    // Try to find in shaders
+    for (int i = 0; i < manager->shaderCount; i++) {
+        if (strcmp(manager->shaders[i].name, name) == 0) {
+            return &manager->shaders[i].shader;
+        }
+    }
+    
+    return NULL;
+}
+
+void UnloadResource(ResourceManager* manager, const char* name) {
+    if (!manager || !name) return;
+    
+    // Try to unload texture
+    for (int i = 0; i < manager->textureCount; i++) {
+        if (strcmp(manager->textures[i].name, name) == 0) {
+            UnloadGameTexture(manager, name);
+            return;
+        }
+    }
+    
+    // Try to unload wave
+    for (int i = 0; i < manager->waveCount; i++) {
+        if (strcmp(manager->waves[i].name, name) == 0) {
+            UnloadGameWave(manager, name);
+            return;
+        }
+    }
+    
+    // Try to unload music
+    for (int i = 0; i < manager->musicCount; i++) {
+        if (strcmp(manager->music[i].name, name) == 0) {
+            UnloadGameMusic(manager, name);
+            return;
+        }
+    }
+    
+    // Try to unload font
+    for (int i = 0; i < manager->fontCount; i++) {
+        if (strcmp(manager->fonts[i].name, name) == 0) {
+            UnloadGameFont(manager, name);
+            return;
+        }
+    }
+    
+    // Try to unload shader
+    for (int i = 0; i < manager->shaderCount; i++) {
+        if (strcmp(manager->shaders[i].name, name) == 0) {
+            UnloadGameShader(manager, name);
+            return;
+        }
+    }
+}
+
+bool LoadResource(ResourceManager* manager, const char* name, const char* filename) {
+    if (!manager || !name || !filename) return false;
+    
+    // Try to determine resource type from file extension
+    const char* ext = strrchr(filename, '.');
+    if (!ext) return false;
+    ext++; // Skip the dot
+    
+    // Load based on file extension
+    if (_stricmp(ext, "png") == 0 || _stricmp(ext, "jpg") == 0 || 
+        _stricmp(ext, "bmp") == 0 || _stricmp(ext, "tga") == 0) {
+        return LoadGameTexture(manager, filename, name);
+    }
+    else if (_stricmp(ext, "wav") == 0) {
+        return LoadGameWave(manager, filename, name);
+    }
+    else if (_stricmp(ext, "mp3") == 0 || _stricmp(ext, "ogg") == 0) {
+        return LoadGameMusic(manager, filename, name);
+    }
+    else if (_stricmp(ext, "ttf") == 0 || _stricmp(ext, "otf") == 0) {
+        return LoadGameFont(manager, filename, name);
+    }
+    else if (_stricmp(ext, "fs") == 0 || _stricmp(ext, "vs") == 0) {
+        // For shaders, we need both vertex and fragment shaders
+        // This is a simplified version - you might want to enhance this
+        return LoadGameShader(manager, filename, filename, name);
+    }
+    
+    return false;
 } 

@@ -1,27 +1,28 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include "raylib.h"
+#include <raylib.h>
 #include "../../include/world.h"
-
-// Macros for accessing tiles and objects
-#define GET_TILE(map, x, y) GetTileAt((map)->world, (x), (y))
-#define SET_TILE(map, x, y, type) SetTileAt((map)->world, (x), (y), (type))
-#define GET_OBJECT(map, x, y) GetObjectAt((map)->world, (x), (y))
-#define SET_OBJECT(map, x, y, type) SetObjectAt((map)->world, (x), (y), (type))
+#include "../../include/map_types.h"
+#include "../../include/estate_map.h"
 
 // Core map functions
-EstateMap* CreateEstateMap(void);
-void DestroyEstateMap(EstateMap* map);
+bool InitMap(World* world);
+void UnloadMap(World* world);
 
-// Map generation functions
-void GenerateEstateMap(EstateMap* map);
+// Map tile and object access functions
+TileType GetTile(const World* world, int x, int y);
+void SetTile(World* world, int x, int y, TileType type);
+ObjectType GetMapObjectAt(const World* world, int x, int y);
+void SetMapObjectAt(World* world, int x, int y, ObjectType type);
 
-// Drawing functions
-void DrawEstateMap(const EstateMap* map);
+// Helper functions
+bool IsWalkable(const World* world, Vector2 position);
+bool IsWalkableGrid(const World* world, int x, int y);
 
-// Utility functions
-#define IsValidSpawnPoint(map, position) IsValidSpawnPoint((map)->world, (position))
-#define GetRandomSpawnPoint(map) GetRandomSpawnPoint((map)->world)
+// Internal functions - not exposed in header
+static bool IsInBounds(int x, int y);
+static int GetIndex(int x, int y);
+static void* SafeAlloc(size_t size);
 
 #endif // MAP_H 

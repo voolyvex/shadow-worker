@@ -6,17 +6,41 @@
 #include <stddef.h>
 #include "constants.h"
 
-#define MAX_COMPONENTS 6
+// Entity dimensions and constants
 #define MAX_COMPONENT_TYPES 32
 #define COMPONENT_ARRAY_ALIGNMENT 16
-
-// Entity dimensions
 #define NPC_WIDTH 32
 #define NPC_HEIGHT 32
+#define NPC_DETECTION_RADIUS 200.0f
+#define NPC_SAFE_DISTANCE 300.0f
+#define PLAYER_SPEED 200.0f
+#define NPC_SPEED 150.0f
+
+// Animation constants
+#define ANIMATION_FRAME_TIME 0.1f
+#define ANIMATION_FRAME_COUNT 4
+#define ARRIVAL_THRESHOLD 5.0f
+
+// State durations
+#define IDLE_DURATION 3.0f
+#define PATROL_DURATION 5.0f
+#define FLEE_DURATION 2.0f
 
 // Forward declarations
 struct World;
 struct Entity;
+
+// Entity states
+typedef enum {
+    ENTITY_STATE_NONE,
+    ENTITY_STATE_IDLE,
+    ENTITY_STATE_PATROL,
+    ENTITY_STATE_CHASE,
+    ENTITY_STATE_FLEE,
+    ENTITY_STATE_ATTACK,
+    ENTITY_STATE_INTERACT,
+    ENTITY_STATE_DEAD
+} EntityState;
 
 // Entity component flags
 typedef enum ComponentFlags {
@@ -62,15 +86,6 @@ typedef enum {
     ENTITY_TYPE_COUNT
 } EntityType;
 
-// NPC States
-typedef enum {
-    NPC_STATE_NONE = 0,
-    NPC_STATE_IDLE,
-    NPC_STATE_PATROL,
-    NPC_STATE_CHASE,
-    NPC_STATE_FLEE
-} NPCState;
-
 // Component type definitions
 typedef struct {
     Vector2 position;
@@ -108,9 +123,11 @@ typedef struct {
     Vector2 homePosition;
     Vector2 targetPosition;
     bool isAggressive;
-    NPCState state;
+    EntityState state;
     float stateTimer;
     int animationFrame;
+    float animationTimer;
+    float moveSpeed;
 } AIComponent;
 
 typedef struct {
@@ -133,6 +150,7 @@ typedef union {
 typedef struct Entity {
     EntityType type;
     ComponentFlags components;
+    EntityState state;
     bool active;
     Vector2 position;
     Rectangle bounds;

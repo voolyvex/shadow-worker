@@ -1,9 +1,22 @@
+#include "../include/warning_suppression.h"
+
+BEGIN_EXTERNAL_WARNINGS
+
+// External includes
+#include <raylib.h>
+#include <raymath.h>
+
+END_EXTERNAL_WARNINGS
+
 #include "map.h"
 #include <stdlib.h>
 #include <string.h>
-#include <raymath.h>
+#include "../../include/world.h"
+#include "../../include/map_types.h"
+#include "../../include/map_system.h"
+#include "../../include/resource_manager.h"
 
-// Memory management helper
+// Internal functions
 static void* SafeAlloc(size_t size) {
     void* ptr = calloc(1, size);
     if (!ptr) {
@@ -13,7 +26,6 @@ static void* SafeAlloc(size_t size) {
     return ptr;
 }
 
-// Helper functions
 static bool IsInBounds(int x, int y) {
     return x >= 0 && x < ESTATE_WIDTH && y >= 0 && y < ESTATE_HEIGHT;
 }
@@ -22,153 +34,112 @@ static int GetIndex(int x, int y) {
     return y * ESTATE_WIDTH + x;
 }
 
-// Core map functions
-EstateMap* CreateEstateMap(void) {
-    EstateMap* map = (EstateMap*)malloc(sizeof(EstateMap));
-    if (!map) return NULL;
-    
-    map->world = InitWorld(GetResourceManager());
-    if (!map->world) {
-        free(map);
-        return NULL;
-    }
-    
-    map->spawnPointCount = 0;
-    map->tileset = LoadTexture("assets/tileset.png");
-    
-    return map;
+// Map tile and object access functions
+void SetTile(World* world, int x, int y, TileType type) {
+    if (!world || !IsInBounds(x, y)) return;
+    world->tiles[GetIndex(x, y)].type = type;
 }
 
-void DestroyEstateMap(EstateMap* map) {
-    if (!map) return;
-    
-    UnloadTexture(map->tileset);
-    UnloadWorld(map->world);
-    free(map);
+void SetMapObjectAt(World* world, int x, int y, ObjectType type) {
+    if (!world || !IsInBounds(x, y)) return;
+    world->tiles[GetIndex(x, y)].objectType = type;
 }
 
-void GenerateEstateMap(EstateMap* map) {
-    if (!map || !map->world) return;
-    
-    // Initialize all tiles to grass
-    for (int y = 0; y < ESTATE_HEIGHT; y++) {
-        for (int x = 0; x < ESTATE_WIDTH; x++) {
-            SET_TILE(map, x, y, TILE_GRASS);
-            SET_OBJECT(map, x, y, OBJECT_NONE);
-        }
-    }
-    
-    // Create a central path
-    int centerX = ESTATE_WIDTH / 2;
-    int centerY = ESTATE_HEIGHT / 2;
-    
-    // Horizontal path
-    for (int x = centerX - 5; x <= centerX + 5; x++) {
-        SET_TILE(map, x, centerY, TILE_PATH);
-        SET_TILE(map, x, centerY - 1, TILE_PATH);
-        SET_TILE(map, x, centerY + 1, TILE_PATH);
-    }
-    
-    // Vertical path
-    for (int y = centerY - 5; y <= centerY + 5; y++) {
-        SET_TILE(map, centerX, y, TILE_PATH);
-        SET_TILE(map, centerX - 1, y, TILE_PATH);
-        SET_TILE(map, centerX + 1, y, TILE_PATH);
-    }
-    
-    // Add some water features
-    for (int i = 0; i < 4; i++) {
-        int x = rand() % (ESTATE_WIDTH - 4) + 2;
-        int y = rand() % (ESTATE_HEIGHT - 4) + 2;
-        
-        for (int dy = -1; dy <= 1; dy++) {
-            for (int dx = -1; dx <= 1; dx++) {
-                if (IsInBounds(x + dx, y + dy)) {
-                    SET_TILE(map, x + dx, y + dy, TILE_WATER);
-                }
-            }
-        }
-    }
-    
-    // Add some decorative objects
-    for (int i = 0; i < 20; i++) {
-        int x = rand() % ESTATE_WIDTH;
-        int y = rand() % ESTATE_HEIGHT;
-        
-        if (GET_TILE(map, x, y) == TILE_GRASS) {
-            ObjectType obj = (ObjectType)(rand() % (OBJECT_FOUNTAIN - OBJECT_TREE + 1) + OBJECT_TREE);
-            SET_OBJECT(map, x, y, obj);
-        }
-    }
-    
-    // Set spawn points along the paths
-    for (int y = 0; y < ESTATE_HEIGHT; y++) {
-        for (int x = 0; x < ESTATE_WIDTH; x++) {
-            if (GET_TILE(map, x, y) == TILE_PATH && map->spawnPointCount < MAX_SPAWN_POINTS) {
-                map->spawnPoints[map->spawnPointCount] = (Vector2){
-                    x * TILE_SIZE + TILE_SIZE/2,
-                    y * TILE_SIZE + TILE_SIZE/2
-                };
-                map->spawnPointCount++;
-            }
-        }
-    }
+TileType GetTile(const World* world, int x, int y) {
+    if (!world || !IsInBounds(x, y)) return TILE_NONE;
+    return world->tiles[GetIndex(x, y)].type;
 }
 
-void DrawEstateMap(const EstateMap* map) {
-    if (!map) return;
-    
-    // Draw base tiles
-    for (int y = 0; y < ESTATE_HEIGHT; y++) {
-        for (int x = 0; x < ESTATE_WIDTH; x++) {
-            Rectangle destRect = {
-                x * TILE_SIZE,
-                y * TILE_SIZE,
-                TILE_SIZE,
-                TILE_SIZE
-            };
-            
-            // Calculate source rectangle based on tile type
-            TileType tile = GET_TILE(map, x, y);
-            Rectangle sourceRect = {
-                tile * TILE_SIZE,
-                0,
-                TILE_SIZE,
-                TILE_SIZE
-            };
-            
-            Vector2 origin = {0.0f, 0.0f};
-            DrawTexturePro(map->tileset, sourceRect, destRect, origin, 0.0f, WHITE);
-        }
-    }
-    
-    // Draw objects
-    for (int y = 0; y < ESTATE_HEIGHT; y++) {
-        for (int x = 0; x < ESTATE_WIDTH; x++) {
-            ObjectType obj = GET_OBJECT(map, x, y);
-            if (obj != OBJECT_NONE) {
-                Rectangle destRect = {
-                    x * TILE_SIZE,
-                    y * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE
-                };
-                
-                Rectangle sourceRect = {
-                    obj * TILE_SIZE,
-                    TILE_SIZE, // Objects are on the second row of the tileset
-                    TILE_SIZE,
-                    TILE_SIZE
-                };
-                
-                Vector2 origin = {0.0f, 0.0f};
-                DrawTexturePro(map->tileset, sourceRect, destRect, origin, 0.0f, WHITE);
-            }
-        }
-    }
-}
-
-ObjectType GetObjectAt(const World* world, int x, int y) {
+ObjectType GetMapObjectAt(const World* world, int x, int y) {
     if (!world || !IsInBounds(x, y)) return OBJECT_NONE;
-    return world->objects[GetIndex(x, y)];
-} 
+    return world->tiles[GetIndex(x, y)].objectType;
+}
+
+// Helper functions
+bool IsWalkableGrid(const World* world, int x, int y) {
+    if (!world || !IsInBounds(x, y)) return false;
+    TileType type = world->tiles[GetIndex(x, y)].type;
+    return type != TILE_WALL && type != TILE_WATER;
+}
+
+bool IsWalkable(const World* world, Vector2 position) {
+    if (!world) return false;
+    
+    // Convert world coordinates to grid coordinates
+    int gridX = (int)(position.x / TILE_SIZE);
+    int gridY = (int)(position.y / TILE_SIZE);
+    
+    return IsWalkableGrid(world, gridX, gridY);
+}
+
+// Core map functions
+bool InitMap(World* world) {
+    if (!world) return false;
+    
+    // Initialize map tiles
+    world->tiles = (Tile*)SafeAlloc(ESTATE_WIDTH * ESTATE_HEIGHT * sizeof(Tile));
+    if (!world->tiles) return false;
+    
+    // Set default tiles
+    for (int y = 0; y < ESTATE_HEIGHT; y++) {
+        for (int x = 0; x < ESTATE_WIDTH; x++) {
+            SetTile(world, x, y, TILE_GRASS);
+            SetMapObjectAt(world, x, y, OBJECT_NONE);
+            
+            // Initialize tile properties
+            int index = GetIndex(x, y);
+            world->tiles[index].properties = (TileProperties){
+                .isWalkable = true,
+                .isDestructible = false,
+                .isInteractive = false,
+                .friction = 1.0f,
+                .resonance = 0.0f,
+                .color = GREEN,
+                .customProperties = NULL
+            };
+        }
+    }
+    
+    return true;
+}
+
+void UnloadMap(World* world) {
+    if (!world || !world->tiles) return;
+    
+    // Free any custom properties
+    for (int i = 0; i < ESTATE_WIDTH * ESTATE_HEIGHT; i++) {
+        if (world->tiles[i].properties.customProperties) {
+            free((void*)world->tiles[i].properties.customProperties);
+        }
+    }
+    
+    free(world->tiles);
+    world->tiles = NULL;
+}
+
+// Helper function to set custom properties for a tile
+void SetTileCustomProperties(World* world, int x, int y, const char* properties) {
+    if (!world || !IsInBounds(x, y)) return;
+    
+    int index = GetIndex(x, y);
+    Tile* tile = &world->tiles[index];
+    
+    // Free existing custom properties if any
+    if (tile->properties.customProperties) {
+        free((void*)tile->properties.customProperties);
+    }
+    
+    // Set new custom properties
+    char* key = _strdup(properties);
+    tile->properties.customProperties = key;
+    
+    // Mark chunk as dirty
+    int chunkX = x / CACHE_CHUNK_SIZE;
+    int chunkY = y / CACHE_CHUNK_SIZE;
+    Vector2 gridPos = {(float)chunkX, (float)chunkY};
+    
+    CachedChunk* chunk = GetChunk(&world->mapSystem->currentMap->cache, gridPos);
+    if (chunk) {
+        chunk->isDirty = true;
+    }
+}

@@ -2,11 +2,14 @@
 #define NPC_H
 
 #include "../entity.h"
+#include "../entity_types.h"
 #include <raylib.h>
 
+// Entity dimensions
 #define NPC_WIDTH 32
 #define NPC_HEIGHT 32
 
+// Personality types
 typedef enum {
     PERSONALITY_NEUTRAL,
     PERSONALITY_FRIENDLY,
@@ -14,8 +17,9 @@ typedef enum {
     PERSONALITY_MYSTERIOUS
 } Personality;
 
+// NPC data structure
 typedef struct {
-    NPCState state;
+    EntityState state;  // Using EntityState from entity_types.h
     Texture2D texture;
     int frame;
     float frameTimer;
@@ -36,26 +40,26 @@ typedef struct {
     float animationTimer;
 } NPCData;
 
-// NPC Management
+// NPC Management functions
 Entity* CreateNPC(struct EntityPool* pool, Vector2 position);
 void DestroyNPC(Entity* npc);
 void UnloadNPC(Entity* entity);
 
-// NPC State Updates
+// State update functions
 void UpdateNPC(Entity* npc, struct World* world, float deltaTime);
 void DrawNPC(Entity* npc);
 void OnNPCCollision(Entity* self, Entity* other);
 
-// NPC State Management
-void UpdateIdleState(NPCData* data, float deltaTime);
-void UpdatePatrolState(NPCData* data, float deltaTime);
-void UpdateChaseState(NPCData* data, float deltaTime);
-void UpdateFleeState(NPCData* data, float deltaTime);
+// State management functions
+void UpdateIdleState(Entity* npc, struct World* world, float deltaTime);
+void UpdatePatrolState(Entity* npc, struct World* world, float deltaTime);
+void UpdateChaseState(Entity* npc, struct World* world, float deltaTime);
+void UpdateFleeState(Entity* npc, struct World* world, float deltaTime);
 
-// NPC Utility Functions
-float GetDistanceToPlayer(Vector2 npcPos);
-bool IsPlayerVisible(Vector2 npcPos);
-Vector2 GetRandomPatrolPoint(void);
-void UpdateNPCAnimation(NPCData* data, float deltaTime);
+// Utility functions
+float GetDistanceToPlayer(const Entity* npc, const struct World* world);
+bool IsPlayerVisible(const Entity* npc, const struct World* world);
+Vector2 GetRandomPatrolPoint(const Entity* npc, const struct World* world);
+void UpdateNPCAnimation(Entity* npc, float deltaTime);
 
-#endif // NPC_H 
+#endif // NPC_H

@@ -3,6 +3,7 @@
 
 #include <raylib.h>
 #include <stdbool.h>
+#include "../constants.h"
 #include "../world.h"
 
 // Room types
@@ -12,15 +13,6 @@ typedef enum RoomType {
     ROOM_SPECIAL,
     ROOM_BOSS
 } RoomType;
-
-// Tile types
-typedef enum TileType {
-    TILE_EMPTY,
-    TILE_WALL,
-    TILE_FLOOR,
-    TILE_DOOR,
-    TILE_OBSTACLE
-} TileType;
 
 // Room structure
 typedef struct Room {

@@ -22,10 +22,32 @@ BEGIN_EXTERNAL_WARNINGS
 
 END_EXTERNAL_WARNINGS
 
+#include "../../include/texture_atlas.h"
+#include "../../include/resource_manager.h"
+
+#define MAX_TILES_PER_ATLAS 256
+#define ATLAS_PADDING 1
+
 // Camera configuration
 #define CAMERA_OFFSET_X (WINDOW_WIDTH / 2.0f)
 #define CAMERA_OFFSET_Y (WINDOW_HEIGHT / 2.0f)
 #define CAMERA_LERP_SPEED 0.1f
+
+typedef struct {
+    Rectangle region;
+    const char* name;
+} AtlasEntry;
+
+typedef struct {
+    RenderTexture2D atlas;
+    AtlasEntry* entries;
+    int entryCount;
+    int width;
+    int height;
+    int tileSize;
+} TextureAtlas;
+
+static TextureAtlas* currentAtlas = NULL;
 
 // Initialize tile properties
 static const TileProperties defaultTileProperties[8] = {
@@ -50,43 +72,14 @@ static void RenderWorld(const World* world);
 EntityPool* CreateEntityPool(size_t initialCapacity);
 
 World* CreateWorld(int width, int height, float gravity, ResourceManager* resourceManager) {
-    World* world = (World*)calloc(1, sizeof(World));
+    World* world = (World*)malloc(sizeof(World));
     if (!world) return NULL;
     
-    // Initialize basic properties
     world->width = width;
     world->height = height;
     world->gravity = gravity;
-    world->friction = 0.8f;
-    world->tileSize = TILE_SIZE;
-    world->dimensions = (Vector2){ width * TILE_SIZE, height * TILE_SIZE };
     world->resourceManager = resourceManager;
     
-    // Allocate tiles
-    world->tiles = (Tile*)calloc(width * height, sizeof(Tile));
-    if (!world->tiles) {
-        free(world);
-        return NULL;
-    }
-    
-    // Initialize tile properties
-    world->tileProperties = (TileProperties*)calloc(width * height, sizeof(TileProperties));
-    if (!world->tileProperties) {
-        free(world->tiles);
-        free(world);
-        return NULL;
-    }
-    
-    // Initialize entity pool
-    world->entityPool = CreateEntityPool((size_t)MAX_ENTITIES);
-    if (!world->entityPool) {
-        free(world->tileProperties);
-        free(world->tiles);
-        free(world);
-        return NULL;
-    }
-    
-    // Initialize camera
     world->camera = (Camera2D){
         .target = (Vector2){ 0, 0 },
         .offset = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f },
@@ -95,9 +88,9 @@ World* CreateWorld(int width, int height, float gravity, ResourceManager* resour
     };
     
     // Load textures
-    world->textures.tilesetTexture = LoadTexture("resources/tileset.png");
-    world->textures.playerTexture = LoadTexture("resources/player.png");
-    world->textures.npcTexture = LoadTexture("resources/npc.png");
+    world->textures.tilesetTexture = LoadTexture("resources/maps/tileset_main.png");
+    world->textures.playerTexture = LoadTexture("resources/sprites/player/idle.png");
+    world->textures.npcTexture = LoadTexture("resources/sprites/npc/base.png");
     
     return world;
 }
@@ -105,15 +98,12 @@ World* CreateWorld(int width, int height, float gravity, ResourceManager* resour
 void DestroyWorld(World* world) {
     if (!world) return;
     
-    // Unload textures
-    UnloadTexture(world->textures.tilesetTexture);
-    UnloadTexture(world->textures.playerTexture);
-    UnloadTexture(world->textures.npcTexture);
-    
     // Free memory
     if (world->entityPool) DestroyEntityPool(world->entityPool);
     if (world->tileProperties) free(world->tileProperties);
     if (world->tiles) free(world->tiles);
+    
+    // Note: Don't destroy the resource manager here as it's managed externally
     
     free(world);
 }
@@ -125,14 +115,16 @@ void SetTileAt(World* world, int x, int y, Tile tile) {
 
 Tile GetTileAt(World* world, int x, int y) {
     if (!world || !world->tiles || x < 0 || x >= world->width || y < 0 || y >= world->height) {
-        return (Tile){ TILE_NONE, OBJECT_NONE };
+        Tile emptyTile = {TILE_NONE, OBJECT_NONE};
+        return emptyTile;
     }
     return world->tiles[y * world->width + x];
 }
 
 void SetTile(World* world, int x, int y, TileType tileType) {
     if (!world || !world->tiles || x < 0 || x >= world->width || y < 0 || y >= world->height) return;
-    world->tiles[y * world->width + x].type = tileType;
+    Tile* tile = &world->tiles[y * world->width + x];
+    tile->type = tileType;
 }
 
 TileType GetTile(World* world, int x, int y) {
@@ -152,15 +144,15 @@ bool IsWalkable(World* world, int x, int y) {
 }
 
 void AddSpawnPoint(World* world, Vector2 position) {
-    if (!world || world->spawnCount >= MAX_SPAWN_POINTS) return;
-    world->spawnPoints[world->spawnCount++] = position;
+    if (!world || world->spawnPointCount >= MAX_SPAWN_POINTS) return;
+    world->spawnPoints[world->spawnPointCount++] = position;
 }
 
 Vector2 GetRandomSpawnPoint(World* world) {
-    if (!world || world->spawnCount == 0) {
+    if (!world || world->spawnPointCount == 0) {
         return (Vector2){ 0, 0 };
     }
-    return world->spawnPoints[rand() % world->spawnCount];
+    return world->spawnPoints[rand() % world->spawnPointCount];
 }
 
 void DrawWorldDebug(World* world) {
@@ -180,7 +172,7 @@ void DrawWorldDebug(World* world) {
     }
     
     // Draw spawn points
-    for (int i = 0; i < world->spawnCount; i++) {
+    for (int i = 0; i < world->spawnPointCount; i++) {
         DrawCircle(world->spawnPoints[i].x, world->spawnPoints[i].y, 5, RED);
     }
 }
@@ -212,7 +204,7 @@ WorldState* CreateWorldState(void) {
     state->world->dimensions = (Vector2){WORLD_WIDTH * TILE_SIZE, WORLD_HEIGHT * TILE_SIZE};
     state->world->gravity = GRAVITY;
     state->world->friction = 0.8f;
-    state->world->spawnCount = 0;
+    state->world->spawnPointCount = 0;
     
     // Initialize camera
     state->camera = (Camera2D){

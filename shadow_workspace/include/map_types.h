@@ -5,8 +5,12 @@
 #include <stdbool.h>
 #include "constants.h"
 
+#define CACHE_CHUNK_SIZE 16  // Size of each cached chunk in tiles
+#define MAX_CACHED_CHUNKS 64 // Maximum number of chunks to keep in cache
+
 // Forward declarations
 struct World;
+struct MapSystem;
 
 // Object types that can be placed in the world
 typedef enum {
@@ -15,10 +19,13 @@ typedef enum {
     OBJECT_BUSH,
     OBJECT_FLOWER,
     OBJECT_FOUNTAIN,
+    OBJECT_STATUE,
+    OBJECT_TORCH,
+    OBJECT_ROCK,
     OBJECT_COUNT
 } ObjectType;
 
-// Properties for each tile type
+// Enhanced tile properties (lightweight TMX-like)
 typedef struct {
     bool isWalkable;
     bool isDestructible;
@@ -26,14 +33,56 @@ typedef struct {
     float friction;
     float resonance;
     Color color;
+    const char* customProperties;  // JSON string for custom properties
 } TileProperties;
 
-// Tile structure
+// Basic tile structure
 typedef struct {
     TileType type;
     ObjectType objectType;
     TileProperties properties;
 } Tile;
+
+// Create a tile with default properties
+static inline Tile CreateTile(TileType type, ObjectType objectType) {
+    Tile tile = {
+        .type = type,
+        .objectType = objectType,
+        .properties = {
+            .isWalkable = true,
+            .isDestructible = false,
+            .isInteractive = false,
+            .friction = 1.0f,
+            .resonance = 0.0f,
+            .color = WHITE,
+            .customProperties = NULL
+        }
+    };
+    return tile;
+}
+
+// Cached chunk for rendering optimization
+typedef struct {
+    RenderTexture2D texture;    // Pre-rendered chunk texture
+    Rectangle bounds;           // World space bounds of this chunk
+    bool isDirty;              // Whether chunk needs updating
+    int lastAccessTime;        // For cache eviction
+    Vector2 gridPosition;      // Position in chunk grid
+} CachedChunk;
+
+// Chunk cache manager
+typedef struct {
+    CachedChunk chunks[MAX_CACHED_CHUNKS];
+    int chunkCount;
+    int frameCounter;          // For cache aging
+} ChunkCache;
+
+// Viewport for culling
+typedef struct {
+    Rectangle bounds;          // Visible area in world space
+    Vector2 chunkMin;         // Min chunk coordinates visible
+    Vector2 chunkMax;         // Max chunk coordinates visible
+} Viewport;
 
 // Map layer for rendering
 typedef struct {
@@ -50,12 +99,17 @@ typedef struct {
     bool* cells;
 } CollisionGrid;
 
-// Map structure
+// Enhanced map structure
 typedef struct {
+    Tile* tiles;
     int width;
     int height;
-    Tile* tiles;
-    TileProperties* properties;
+    ChunkCache cache;
+    Viewport viewport;
+    bool enableCulling;
+    TileProperties* properties;  // Array of properties for the map
 } TileMap;
+
+// Map system structure is defined in map_system.h
 
 #endif // MAP_TYPES_H 

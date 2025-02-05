@@ -1,57 +1,44 @@
 {
     "tileSize": 32,
     "tiles": {
-        "grass": {
+        "empty": {
             "id": 0,
             "solid": false,
-            "coords": [0, 0]
-        },
-        "path": {
-            "id": 1,
-            "solid": false,
-            "coords": [1, 0]
-        },
-        "water": {
-            "id": 2,
-            "solid": true,
-            "coords": [2, 0]
-        },
-        "wall": {
-            "id": 3,
-            "solid": true,
-            "coords": [3, 0]
+            "textureCoords": [0, 0]
         },
         "floor": {
-            "id": 4,
+            "id": 1,
             "solid": false,
-            "coords": [4, 0]
+            "textureCoords": [1, 0]
+        },
+        "wall": {
+            "id": 2,
+            "solid": true,
+            "textureCoords": [2, 0]
+        },
+        "door": {
+            "id": 3,
+            "solid": false,
+            "textureCoords": [3, 0]
         }
     },
     "objects": {
         "none": {
             "id": 0,
             "solid": false,
-            "coords": [0, 1]
+            "textureCoords": [0, 1]
         },
-        "tree": {
+        "chest": {
             "id": 1,
             "solid": true,
-            "coords": [1, 1]
+            "textureCoords": [1, 1],
+            "interactive": true
         },
-        "bush": {
+        "torch": {
             "id": 2,
-            "solid": true,
-            "coords": [2, 1]
-        },
-        "flower": {
-            "id": 3,
             "solid": false,
-            "coords": [3, 1]
-        },
-        "fountain": {
-            "id": 4,
-            "solid": true,
-            "coords": [4, 1]
+            "textureCoords": [2, 1],
+            "light": true
         }
     },
     "layers": {

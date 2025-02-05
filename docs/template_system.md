@@ -1,92 +1,66 @@
-# Shadow Worker - Template System Documentation
+# Shadow Worker - Template System
 
 ## Overview
 
-The template system in Shadow Worker provides a flexible and extensible way to define and generate game environments. It consists of two main components:
-1. The Estate Map System
-2. The Room Template System
+The template system provides a flexible framework for procedural room generation and texture management. It integrates with the tile system to create dynamic, visually rich environments.
 
-## Estate Map System
+## Core Components
 
-### Purpose
-The Estate Map System generates the overall layout of the game environment, including:
-- Central courtyard
-- Connecting paths
-- Gardens and water features
-- Decorative elements
-- NPC spawn points
+### 1. Room Templates
+```c
+typedef struct RoomTemplate {
+    int width;
+    int height;
+    TileType** tiles;
+    ObjectType** objects;
+    Vector2* spawnPoints;
+    int spawnCount;
+    Rectangle* connections;
+    int connectionCount;
+    MapSystem mapSystem;
+} RoomTemplate;
+```
 
-### Key Components
-
-#### 1. Tile Types
+### 2. Tile Types
 ```c
 typedef enum {
-    TILE_GRASS,    // Base terrain
-    TILE_PATH,     // Walkable paths
-    TILE_WATER,    // Water features
-    TILE_WALL,     // Solid boundaries
-    TILE_FLOOR     // Interior surfaces
+    TILE_EMPTY = 0,
+    TILE_FLOOR = 1,
+    TILE_WALL = 2,
+    TILE_DOOR = 3,
+    TILE_GRASS = 4,
+    TILE_WATER = 5
 } TileType;
 ```
 
-#### 2. Object Types
+### 3. Object Types
 ```c
 typedef enum {
-    OBJECT_NONE,    // Empty space
-    OBJECT_TREE,    // Large vegetation
-    OBJECT_BUSH,    // Medium vegetation
-    OBJECT_FLOWER,  // Small vegetation
-    OBJECT_FOUNTAIN // Central feature
+    OBJECT_NONE = 0,
+    OBJECT_CHEST = 1,
+    OBJECT_TORCH = 2,
+    OBJECT_TREE = 3,
+    OBJECT_BUSH = 4
 } ObjectType;
 ```
 
-### Generation Process
+## Resource Integration
 
-1. Base Terrain
-   - Initialize grass base layer
-   - Define estate boundaries
-   - Set up collision properties
-
-2. Core Layout
-   - Generate central courtyard
-   - Create main pathways
-   - Place central fountain
-   - Define key architectural elements
-
-3. Environmental Features
-   - Add water features
-   - Place vegetation
-   - Create garden areas
-   - Distribute decorative elements
-
-4. Gameplay Elements
-   - Define spawn points
-   - Place interactive objects
-   - Set up collision zones
-   - Configure navigation paths
-
-## Tileset Configuration
-
-The tileset configuration (`tileset_config.json`) defines the visual and behavioral properties of all tiles and objects:
-
+### 1. Texture Management
 ```json
 {
     "tileSize": 32,
     "tiles": {
-        "grass": {
+        "empty": {
             "id": 0,
             "solid": false,
-            "coords": [0, 0]
+            "textureCoords": [0, 0]
         },
-        // ... other tile definitions
-    },
-    "objects": {
-        "tree": {
+        "floor": {
             "id": 1,
-            "solid": true,
-            "coords": [1, 1]
-        },
-        // ... other object definitions
+            "solid": false,
+            "textureCoords": [1, 0]
+        }
     },
     "animations": {
         "water_ripple": {
@@ -97,286 +71,176 @@ The tileset configuration (`tileset_config.json`) defines the visual and behavio
 }
 ```
 
-## Integration with World System
+### 2. Resource Loading Pipeline
+1. Load individual tile textures
+2. Generate texture atlas
+3. Configure tile properties
+4. Initialize room templates
+5. Set up animation data
 
-The Estate Map System integrates with the World System through:
+## Generation Pipeline
 
-1. Tile Management
+### 1. Template Loading
 ```c
-void SetTileAt(World* world, int x, int y, TileType type);
-TileType GetTileAt(World* world, int x, int y);
+// Load and validate template
+RoomTemplate* LoadRoomTemplate(const char* path) {
+    // Parse JSON template
+    // Validate dimensions
+    // Initialize arrays
+    // Set up MapSystem
+    return template;
+}
 ```
 
-2. Spawn Point Management
+### 2. Room Generation
 ```c
-bool IsValidSpawnPoint(World* world, Vector2 position);
-Vector2 GetRandomSpawnPoint(World* world);
+// Generate room from template
+bool GenerateRoom(World* world, RoomTemplate* template, Vector2 position) {
+    // Validate placement
+    // Copy tiles and objects
+    // Set up connections
+    // Initialize spawn points
+    return success;
+}
 ```
 
-3. Collision Detection
+### 3. World Integration
 ```c
-bool IsTileSolid(World* world, int x, int y);
-bool CheckCollision(World* world, Rectangle bounds);
+// Integrate room into world
+void IntegrateRoom(World* world, Room* room) {
+    // Update collision data
+    // Set up lighting
+    // Initialize objects
+    // Configure properties
+}
 ```
 
-## Memory Management
+## Texture Atlas Generation
 
-The system employs careful memory management:
-
-1. Allocation
-```c
-EstateMap* CreateEstateMap(World* world);
-```
-
-2. Cleanup
-```c
-void UnloadEstateMap(EstateMap* map);
-```
-
-## Testing
-
-The template system includes comprehensive testing:
-
-1. Unit Tests
-```c
-void AssertInBounds(void);
-void AssertGetIndex(void);
-void ValidateMapCreation(void);
-void ValidateMapGeneration(void);
-```
-
-2. Integration Tests
-- World system integration
-- Resource management
-- Memory leak detection
-- Performance benchmarks
-
-## Future Enhancements
-
-1. Procedural Generation
-   - Enhanced path algorithms
-   - More varied garden layouts
-   - Dynamic object placement
-   - Weather-based variations
-
-2. Visual Effects
-   - Dynamic lighting
-   - Particle systems
-   - Weather effects
-   - Time-of-day changes
-
-3. Gameplay Features
-   - Interactive objects
-   - Dynamic events
-   - Environmental hazards
-   - Seasonal changes
-
-4. Performance Optimizations
-   - Tile batching
-   - Occlusion culling
-   - Memory pooling
-   - Asset streaming
-
-## Template Types
-
-### Room Templates
+### 1. Atlas Configuration
 ```json
 {
-    "type": "combat",
-    "difficulty": 1,
+    "atlas": {
+        "width": 512,
+        "height": 512,
+        "tileSize": 32,
+        "padding": 1,
+        "format": "RGBA8888"
+    }
+}
+```
+
+### 2. Generation Process
+1. Scan tile directory
+2. Load individual textures
+3. Pack into atlas
+4. Generate UV coordinates
+5. Save atlas metadata
+
+### 3. Runtime Usage
+```c
+// Access atlas textures
+void DrawTile(TileType type, Vector2 position) {
+    Rectangle source = GetTileSourceRect(type);
+    DrawTextureRec(atlas, source, position, WHITE);
+}
+```
+
+## Template Format
+
+### 1. Room Definition
+```json
+{
+    "name": "basic_room",
+    "type": "ROOM_BASE",
     "size": {
-        "x": 6,
-        "y": 6
+        "width": 10,
+        "height": 8
     },
-    "connections": {
-        "positions": [
-            {
-                "x": 0,
-                "y": 3,
-                "type": "door",
-                "roomSize": {"x": 6, "y": 6}
-            }
-        ]
+    "layers": {
+        "tiles": [[2,2,2,2,2], [2,1,1,1,2], [2,2,2,2,2]],
+        "objects": [[0,0,0,0,0], [0,1,0,2,0], [0,0,0,0,0]]
     },
     "spawns": [
-        {
-            "x": 3,
-            "y": 3,
-            "type": "enemy",
-            "enemyType": "basic"
-        }
+        {"type": "npc", "x": 5, "y": 4}
+    ],
+    "connections": [
+        {"side": "west", "y": 3},
+        {"side": "east", "y": 3}
     ]
 }
 ```
 
-### Supported Room Types
-- `combat`: Combat encounter rooms
-- `treasure`: Reward and item rooms
-- `shop`: Merchant and upgrade rooms
-- `boss`: Boss battle arenas
-
-### Room Sizes
-- `tiny`: 4x4 tiles
-- `small`: 6x6 tiles
-- `medium`: 8x8 tiles
-- `large`: 10x10 tiles
-- `huge`: 12x12 tiles
-- `boss`: 16x16 tiles
-
-## Scaling System
-
-### Scaling Modes
-1. **PixelPerfect**
-   - Nearest-neighbor scaling
-   - No interpolation
-   - Best for maintaining pixel art clarity
-
-2. **Smooth**
-   - Bilinear filtering
-   - Mipmapping enabled
-   - Suitable for larger rooms
-
-3. **Detailed**
-   - Trilinear filtering
-   - Anisotropic filtering (4x)
-   - Best for high-resolution assets
-
-### Feature Preservation
-The scaling system preserves:
-- Door positions and alignment
-- Spawn point validity
-- Obstacle placement
-- Room proportions
-- Gameplay balance
-
-## Integration System
-
-### Door Alignment
-- Doors must be placed on room edges
-- Center alignment within wall sections
-- Minimum spacing between doors
-- Valid clearance for player movement
-
-### Transitions
-1. **Smooth Transitions**
-   - Gradual blending between rooms
-   - Height matching for seamless connections
-   - Texture blending at boundaries
-
-2. **Sharp Transitions**
-   - Immediate changes between rooms
-   - Useful for distinct area separation
-   - Maintains architectural integrity
-
-### Connection Matching
-The system scores connections based on:
-- Relative position (40% weight)
-- Orientation compatibility (30% weight)
-- Size compatibility (30% weight)
-
-## Usage Examples
-
-### Basic Template Validation
-```powershell
-Test-LevelTemplate -TemplatePath "templates/combat_room.json" -TemplateType "rooms"
-```
-
-### Scaling Templates
-```powershell
-$scaled = Get-ScaledTemplate -TemplatePath "templates/basic_room.json" -TargetSize "large" -ScaleMode "PixelPerfect"
-```
-
-### Creating Transitions
-```powershell
-$transition = New-TemplateTransition -SourceTemplatePath "room1.json" -TargetTemplatePath "room2.json" -TransitionType "smooth"
+### 2. Texture Properties
+```json
+{
+    "properties": {
+        "resonanceEnabled": true,
+        "shadowCasting": true,
+        "ambientOcclusion": true,
+        "waterReflections": true
+    }
+}
 ```
 
 ## Performance Optimization
 
-### Memory Management
-- Template caching for frequent sizes
-- Resource pooling for common elements
-- Efficient texture atlas usage
-- Dynamic batch processing
+### 1. Memory Management
+- Pre-generate texture atlases
+- Cache frequently used templates
+- Implement resource streaming
+- Use compressed textures
 
-### Loading Optimization
-- Chunk-based loading system
-- Asynchronous template processing
-- Background transition generation
-- Smart resource unloading
+### 2. Runtime Optimization
+- Batch similar draw calls
+- Implement texture atlasing
+- Use hardware instancing
+- Minimize state changes
 
-## Validation Rules
+### 3. Resource Loading
+- Asynchronous template loading
+- Progressive texture loading
+- Background atlas generation
+- Resource pooling
 
-### Room Templates
-- Must specify type and difficulty
-- Valid size dimensions
-- At least one connection point
-- Proper spawn point placement
+## Error Handling
 
-### Transitions
-- Compatible connection points
-- Valid blend distances
-- Proper texture coordinates
-- Collision boundary integrity
-
-## Testing
-
-### Running Tests
-```powershell
-.\tests\test_template_scaling.ps1 -Verbose
+### 1. Template Validation
+```c
+bool ValidateTemplate(const RoomTemplate* template) {
+    // Check dimensions
+    // Validate connections
+    // Verify textures
+    // Check properties
+}
 ```
 
-### Test Coverage
-- Template validation
-- Scaling accuracy
-- Feature preservation
-- Transition generation
-- Performance metrics
+### 2. Resource Verification
+```c
+bool VerifyResources(const RoomTemplate* template) {
+    // Check texture availability
+    // Validate atlas integrity
+    // Verify memory constraints
+    // Check file access
+}
+```
 
 ## Best Practices
 
 1. **Template Design**
-   - Use standard room sizes
-   - Place doors at standard positions
-   - Maintain clear paths
-   - Balance feature distribution
+   - Keep templates modular
+   - Use consistent naming
+   - Document constraints
+   - Version control templates
 
-2. **Scaling Considerations**
-   - Choose appropriate scaling modes
-   - Verify feature preservation
-   - Test different size combinations
-   - Monitor performance impact
+2. **Resource Management**
+   - Pre-generate atlases
+   - Cache common templates
+   - Clean up unused resources
+   - Monitor memory usage
 
-3. **Integration Guidelines**
-   - Plan connection points carefully
-   - Test transitions thoroughly
-   - Validate gameplay flow
-   - Consider visual coherence
-
-## Error Handling
-
-### Common Issues
-1. Invalid template structure
-2. Incompatible scaling requests
-3. Connection matching failures
-4. Resource loading errors
-
-### Resolution Steps
-1. Validate template format
-2. Check size compatibility
-3. Verify connection points
-4. Monitor resource usage
-
-## Future Enhancements
-
-### Planned Features
-1. Advanced biome transitions
-2. Dynamic difficulty scaling
-3. Procedural decoration
-4. Enhanced lighting integration
-
-### Performance Improvements
-1. Optimized batch processing
-2. Enhanced caching system
-3. Smarter resource management
-4. Parallel processing support 
+3. **Error Recovery**
+   - Provide fallback textures
+   - Handle missing resources
+   - Log validation errors
+   - Implement safe defaults 

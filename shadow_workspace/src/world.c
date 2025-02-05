@@ -1,3 +1,8 @@
+#include "../include/warning_suppression.h"
+
+BEGIN_EXTERNAL_WARNINGS
+
+// External includes
 #include <raylib.h>
 #include <raymath.h>
 #include <stdlib.h>
@@ -11,11 +16,38 @@
 #include "../include/logger.h"
 #include "core/map.h"
 #include "map_system.h"
+#include "../include/warning_suppression.h"
+#include "../include/entity_pool.h"
+#include "../include/resource_manager.h"
+
+END_EXTERNAL_WARNINGS
+
+#include "../../include/texture_atlas.h"
+#include "../../include/resource_manager.h"
+
+#define MAX_TILES_PER_ATLAS 256
+#define ATLAS_PADDING 1
 
 // Camera configuration
 #define CAMERA_OFFSET_X (WINDOW_WIDTH / 2.0f)
 #define CAMERA_OFFSET_Y (WINDOW_HEIGHT / 2.0f)
 #define CAMERA_LERP_SPEED 0.1f
+
+typedef struct {
+    Rectangle region;
+    const char* name;
+} AtlasEntry;
+
+typedef struct {
+    RenderTexture2D atlas;
+    AtlasEntry* entries;
+    int entryCount;
+    int width;
+    int height;
+    int tileSize;
+} TextureAtlas;
+
+static TextureAtlas* currentAtlas = NULL;
 
 // Initialize tile properties
 static const TileProperties defaultTileProperties[8] = {
@@ -32,6 +64,131 @@ static const TileProperties defaultTileProperties[8] = {
 // Forward declarations
 static bool IsInCircle(int centerX, int centerY, int x, int y, float radius);
 
+BEGIN_EXTERNAL_WARNINGS
+
+// Function declarations with proper parameter lists
+static void UpdateWorldState(World* world, float deltaTime);
+static void RenderWorld(const World* world);
+EntityPool* CreateEntityPool(size_t initialCapacity);
+
+World* CreateWorld(int width, int height, float gravity, ResourceManager* resourceManager) {
+    World* world = (World*)malloc(sizeof(World));
+    if (!world) return NULL;
+    
+    world->width = width;
+    world->height = height;
+    world->gravity = gravity;
+    world->resourceManager = resourceManager;
+    
+    world->camera = (Camera2D){
+        .target = (Vector2){ 0, 0 },
+        .offset = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f },
+        .rotation = 0.0f,
+        .zoom = 1.0f
+    };
+    
+    // Load textures
+    world->textures.tilesetTexture = LoadTexture("resources/maps/tileset_main.png");
+    world->textures.playerTexture = LoadTexture("resources/sprites/player/idle.png");
+    world->textures.npcTexture = LoadTexture("resources/sprites/npc/base.png");
+    
+    return world;
+}
+
+void DestroyWorld(World* world) {
+    if (!world) return;
+    
+    // Free memory
+    if (world->entityPool) DestroyEntityPool(world->entityPool);
+    if (world->tileProperties) free(world->tileProperties);
+    if (world->tiles) free(world->tiles);
+    
+    // Note: Don't destroy the resource manager here as it's managed externally
+    
+    free(world);
+}
+
+void SetTileAt(World* world, int x, int y, Tile tile) {
+    if (!world || !world->tiles || x < 0 || x >= world->width || y < 0 || y >= world->height) return;
+    world->tiles[y * world->width + x] = tile;
+}
+
+Tile GetTileAt(World* world, int x, int y) {
+    if (!world || !world->tiles || x < 0 || x >= world->width || y < 0 || y >= world->height) {
+        Tile emptyTile = {TILE_NONE, OBJECT_NONE};
+        return emptyTile;
+    }
+    return world->tiles[y * world->width + x];
+}
+
+void SetTile(World* world, int x, int y, TileType tileType) {
+    if (!world || !world->tiles || x < 0 || x >= world->width || y < 0 || y >= world->height) return;
+    Tile* tile = &world->tiles[y * world->width + x];
+    tile->type = tileType;
+}
+
+TileType GetTile(World* world, int x, int y) {
+    if (!world || !world->tiles || x < 0 || x >= world->width || y < 0 || y >= world->height) {
+        return TILE_NONE;
+    }
+    return world->tiles[y * world->width + x].type;
+}
+
+bool IsWalkable(World* world, int x, int y) {
+    if (!world || !world->tiles || x < 0 || x >= world->width || y < 0 || y >= world->height) {
+        return false;
+    }
+    
+    TileType type = world->tiles[y * world->width + x].type;
+    return type != TILE_WALL && type != TILE_WATER;
+}
+
+void AddSpawnPoint(World* world, Vector2 position) {
+    if (!world || world->spawnPointCount >= MAX_SPAWN_POINTS) return;
+    world->spawnPoints[world->spawnPointCount++] = position;
+}
+
+Vector2 GetRandomSpawnPoint(World* world) {
+    if (!world || world->spawnPointCount == 0) {
+        return (Vector2){ 0, 0 };
+    }
+    return world->spawnPoints[rand() % world->spawnPointCount];
+}
+
+void DrawWorldDebug(World* world) {
+    if (!world) return;
+    
+    // Draw tile grid
+    for (int y = 0; y < world->height; y++) {
+        for (int x = 0; x < world->width; x++) {
+            Rectangle rect = {
+                x * world->tileSize,
+                y * world->tileSize,
+                world->tileSize,
+                world->tileSize
+            };
+            DrawRectangleLines(rect.x, rect.y, rect.width, rect.height, GRAY);
+        }
+    }
+    
+    // Draw spawn points
+    for (int i = 0; i < world->spawnPointCount; i++) {
+        DrawCircle(world->spawnPoints[i].x, world->spawnPoints[i].y, 5, RED);
+    }
+}
+
+void DrawCollisionDebug(World* world) {
+    if (!world || !world->entityPool) return;
+    
+    // Draw entity collision boxes
+    for (size_t i = 0; i < world->entityPool->count; i++) {
+        Entity* entity = &world->entityPool->entities[i];
+        if (!entity->active) continue;
+        
+        DrawRectangleLinesEx(entity->collider, 1, GREEN);
+    }
+}
+
 WorldState* CreateWorldState(void) {
     WorldState* state = (WorldState*)calloc(1, sizeof(WorldState));
     if (!state) return NULL;
@@ -47,7 +204,7 @@ WorldState* CreateWorldState(void) {
     state->world->dimensions = (Vector2){WORLD_WIDTH * TILE_SIZE, WORLD_HEIGHT * TILE_SIZE};
     state->world->gravity = GRAVITY;
     state->world->friction = 0.8f;
-    state->world->spawnCount = 0;
+    state->world->spawnPointCount = 0;
     
     // Initialize camera
     state->camera = (Camera2D){
@@ -66,7 +223,7 @@ WorldState* CreateWorldState(void) {
     }
     
     // Initialize entity pool
-    state->entityPool = CreateEntityPool();
+    state->entityPool = CreateEntityPool((size_t)MAX_ENTITIES);
     if (!state->entityPool) {
         DestroyResourceManager(state->textureManager);
         free(state->world);
@@ -236,3 +393,30 @@ static bool IsInCircle(int centerX, int centerY, int x, int y, float radius) {
     float dy = (float)(y - centerY);
     return (dx * dx + dy * dy) <= (radius * radius);
 }
+
+void UnloadWorld(World* world) {
+    if (!world) return;
+    
+    // Unload map system
+    if (world->mapSystem) {
+        DestroyMapSystem(world->mapSystem);
+        world->mapSystem = NULL;
+    }
+    
+    // Unload entity pool
+    if (world->entityPool) {
+        DestroyEntityPool(world->entityPool);
+        world->entityPool = NULL;
+    }
+    
+    // Unload resource manager
+    if (world->resourceManager) {
+        DestroyResourceManager(world->resourceManager);
+        world->resourceManager = NULL;
+    }
+    
+    // Free world structure
+    free(world);
+}
+
+END_EXTERNAL_WARNINGS

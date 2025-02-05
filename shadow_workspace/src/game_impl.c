@@ -1,3 +1,13 @@
+#include "../include/warning_suppression.h"
+
+BEGIN_EXTERNAL_WARNINGS
+
+// External includes
+#include <raylib.h>
+#include <raymath.h>
+
+END_EXTERNAL_WARNINGS
+
 #include "../include/game.h"
 #include "../include/resource_manager.h"
 #include "../include/world.h"
@@ -7,8 +17,6 @@
 #include "../include/entities/npc.h"
 #include "../include/sound_manager.h"
 #include "../include/constants.h"
-#include <raylib.h>
-#include <raymath.h>
 #include <stdlib.h>
 
 // Forward declarations
@@ -16,6 +24,9 @@ static void UpdateMenu(Game* game);
 static void UpdateEntities(Game* game);
 static void DrawEntities(Game* game);
 static void UpdateCamera(Game* game);
+static void UpdateGame(Game* game);
+static void DrawGame(Game* game);
+static void UnloadGame(Game* game);
 
 static Entity* player = NULL;  // Store player entity globally for easy access
 static Entity* npc = NULL;     // Store NPC entity globally for easy access
@@ -307,11 +318,11 @@ void Game_ResetState(Game* game) {
     game->deltaTime = 0.0f;
 }
 
-void UpdateGame(Game* game, float deltaTime) {
+void UpdateGame(Game* game) {
     if (!game) return;
     
     // Update game state
-    game->deltaTime = deltaTime;
+    game->deltaTime = GetFrameTime();
     
     // Create world if not exists
     if (!game->world) {
@@ -323,7 +334,7 @@ void UpdateGame(Game* game, float deltaTime) {
     }
     
     // Update world and all entities
-    UpdateWorld(game->world, deltaTime);
+    UpdateWorld(game->world, game->deltaTime);
 
     // Handle input
     if (IsKeyPressed(KEY_ESCAPE)) {

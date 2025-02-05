@@ -1,3 +1,13 @@
+#include "../include/warning_suppression.h"
+
+BEGIN_EXTERNAL_WARNINGS
+
+// External includes
+#include <raylib.h>
+#include <raymath.h>
+
+END_EXTERNAL_WARNINGS
+
 #include "../include/game.h"
 #include "../include/resource_manager.h"
 #include "../include/world.h"
@@ -6,8 +16,7 @@
 #include "../include/entities/player.h"
 #include "../include/entities/npc.h"
 #include "../include/sound_manager.h"
-#include <raylib.h>
-#include <raymath.h>
+#include "../include/constants.h"
 #include <stdlib.h>
 
 // Forward declarations
@@ -15,6 +24,9 @@ static void UpdateMenu(Game* game);
 static void UpdateEntities(Game* game);
 static void DrawEntities(Game* game);
 static void UpdateCamera(Game* game);
+static void UpdateGame(Game* game);
+static void DrawGame(Game* game);
+static void UnloadGame(Game* game);
 
 static Entity* player = NULL;  // Store player entity globally for easy access
 static Entity* npc = NULL;     // Store NPC entity globally for easy access
@@ -47,95 +59,39 @@ Game* Game_Init(void) {
         return NULL;
     }
     TraceLog(LOG_INFO, "Game structure allocated successfully");
-
-    // Initialize window
-    TraceLog(LOG_INFO, "Initializing window (%dx%d)", WINDOW_WIDTH, WINDOW_HEIGHT);
-    SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_TITLE);
-    if (!IsWindowReady()) {
-        TraceLog(LOG_ERROR, "Window initialization failed");
-        free(game);
-        return NULL;
-    }
-    SetTargetFPS(TARGET_FPS);
-    TraceLog(LOG_INFO, "Window initialized successfully");
     
-    // Initialize game structure
+    // Initialize game state
     game->state = GAME_STATE_MENU;
     game->isRunning = true;
     game->deltaTime = 0.0f;
-    game->currentScene = NULL;
-    game->entityPool = NULL;
-    game->world = NULL;
+    
+    // Initialize resource manager
+    game->resources = CreateResourceManager();
+    if (!game->resources) {
+        TraceLog(LOG_ERROR, "Failed to create resource manager");
+        free(game);
+        return NULL;
+    }
+    
+    // Create initial world
+    game->world = CreateWorld(ESTATE_WIDTH, ESTATE_HEIGHT, 9.81f, game->resources);
+    if (!game->world) {
+        TraceLog(LOG_ERROR, "Failed to create world");
+        DestroyResourceManager(game->resources);
+        free(game);
+        return NULL;
+    }
     
     // Initialize camera
-    game->camera.target = (Vector2){0, 0};
-    game->camera.offset = (Vector2){WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 2.0f};
+    game->camera.target = (Vector2){ 0, 0 };
+    game->camera.offset = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
     game->camera.rotation = 0.0f;
     game->camera.zoom = 1.0f;
     
-    TraceLog(LOG_INFO, "Initializing resource manager...");
-    if (!InitResourceManager()) {
-        TraceLog(LOG_ERROR, "Failed to initialize resource manager");
-        free(game);
-        CloseWindow();
-        return NULL;
-    }
-    TraceLog(LOG_INFO, "Resource manager initialized successfully");
-    
-    TraceLog(LOG_INFO, "Initializing sound manager...");
-    if (!InitSoundManager()) {
-        TraceLog(LOG_ERROR, "Failed to initialize sound manager");
-        UnloadResourceManager();
-        CloseWindow();
-        free(game);
-        return NULL;
-    }
-    TraceLog(LOG_INFO, "Sound manager initialized successfully");
-    
-    // Get resource manager instance
-    game->resources = GetResourceManager();
-    if (!game->resources) {
-        TraceLog(LOG_ERROR, "Failed to get resource manager instance");
-        UnloadSoundManager();
-        UnloadResourceManager();
-        CloseWindow();
-        free(game);
-        return NULL;
-    }
-    TraceLog(LOG_INFO, "Resource manager instance obtained successfully");
-    
-    // Initialize world
-    TraceLog(LOG_INFO, "Initializing world...");
-    game->world = InitWorld(game->resources);
-    if (!game->world) {
-        TraceLog(LOG_ERROR, "Failed to initialize world");
-        UnloadSoundManager();
-        UnloadResourceManager();
-        CloseWindow();
-        free(game);
-        return NULL;
-    }
-    TraceLog(LOG_INFO, "World initialized successfully");
-
-    // Initialize entity pool
-    TraceLog(LOG_INFO, "Initializing entity pool...");
-    game->entityPool = InitEntityPool();
-    if (!game->entityPool) {
-        TraceLog(LOG_ERROR, "Failed to initialize entity pool");
-        UnloadWorld(game->world);
-        UnloadSoundManager();
-        UnloadResourceManager();
-        CloseWindow();
-        free(game);
-        return NULL;
-    }
-    TraceLog(LOG_INFO, "Entity pool initialized successfully");
-
     // Store global instance
     g_game = game;
-    TraceLog(LOG_INFO, "Game initialization completed successfully");
     
+    TraceLog(LOG_INFO, "Game initialization completed successfully");
     return game;
 }
 
@@ -271,58 +227,114 @@ void Game_TogglePause(Game* game) {
 
 void Game_ChangeState(Game* game, GameState newState) {
     if (!game) return;
+    
+    // Clean up old state if needed
+    if (game->world) {
+        UnloadWorld(game->world);
+        game->world = NULL;
+    }
+    
+    // Initialize new state
     game->state = newState;
+    
+    // Create new world for the new state
+    game->world = CreateWorld(ESTATE_WIDTH, ESTATE_HEIGHT, 9.81f, game->resources);
+    if (!game->world) {
+        TraceLog(LOG_ERROR, "Failed to create world for new state");
+        return;
+    }
 }
 
 void Game_UpdateCamera(Game* game) {
-    if (!game || !game->world) return;
-
-    // Update camera position based on player if available
-    Entity* player = GetEntityByType(game->entityPool, ENTITY_TYPE_PLAYER);
-    if (player) {
-        TransformComponent* transform = GetTransformComponent(player);
-        if (transform) {
-            game->camera.target = transform->position;
+    if (!game) return;
+    
+    // Create world if not exists
+    if (!game->world) {
+        game->world = CreateWorld(ESTATE_WIDTH, ESTATE_HEIGHT, 9.81f, game->resources);
+        if (!game->world) {
+            TraceLog(LOG_ERROR, "Failed to create world for camera update");
+            return;
         }
     }
-
-    // Camera zoom controls
-    float wheel = GetMouseWheelMove();
-    if (wheel != 0) {
-        game->camera.zoom += wheel * 0.1f;
-        if (game->camera.zoom < 0.1f) game->camera.zoom = 0.1f;
-        if (game->camera.zoom > 3.0f) game->camera.zoom = 3.0f;
+    
+    // Find the player entity
+    Entity* player = NULL;
+    for (int i = 0; i < game->world->entityPool->count; i++) {
+        Entity* entity = &game->world->entityPool->entities[i];
+        if (entity->type == ENTITY_TYPE_PLAYER) {
+            player = entity;
+            break;
+        }
     }
-
-    // Reset camera zoom
-    if (IsKeyPressed(KEY_R)) {
-        game->camera.zoom = 1.0f;
+    
+    // Update camera to follow player
+    if (player) {
+        game->camera.target = player->position;
     }
+}
+
+void Game_ResetCamera(Game* game) {
+    if (!game) return;
+    
+    // Create world if not exists
+    if (!game->world) {
+        game->world = CreateWorld(ESTATE_WIDTH, ESTATE_HEIGHT, 9.81f, game->resources);
+        if (!game->world) {
+            TraceLog(LOG_ERROR, "Failed to create world for camera reset");
+            return;
+        }
+    }
+    
+    // Reset camera position and zoom
+    game->camera.target = (Vector2){ 0, 0 };
+    game->camera.offset = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
+    game->camera.rotation = 0.0f;
+    game->camera.zoom = 1.0f;
 }
 
 void Game_ResetState(Game* game) {
     if (!game) return;
     
-    game->state = GAME_STATE_MENU;
-    game->isRunning = true;
-    game->deltaTime = 0.0f;
-    
+    // Clean up existing world if any
     if (game->world) {
         UnloadWorld(game->world);
-        game->world = CreateWorld();
     }
     
-    if (game->entityPool) {
-        DestroyEntityPool(game->entityPool);
-        game->entityPool = CreateEntityPool();
+    // Create new world with default settings
+    game->world = CreateWorld(ESTATE_WIDTH, ESTATE_HEIGHT, 9.81f, game->resources);
+    if (!game->world) {
+        TraceLog(LOG_ERROR, "Failed to create world during reset");
+        return;
     }
+    
+    // Reset camera
+    game->camera.target = (Vector2){ 0, 0 };
+    game->camera.offset = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
+    game->camera.rotation = 0.0f;
+    game->camera.zoom = 1.0f;
+    
+    // Reset game state
+    game->state = GAME_STATE_MENU;
+    game->deltaTime = 0.0f;
 }
 
-void UpdateGame(Game* game, float deltaTime) {
-    if (!game || !game->world) return;
-
+void UpdateGame(Game* game) {
+    if (!game) return;
+    
+    // Update game state
+    game->deltaTime = GetFrameTime();
+    
+    // Create world if not exists
+    if (!game->world) {
+        game->world = CreateWorld(ESTATE_WIDTH, ESTATE_HEIGHT, 9.81f, game->resources);
+        if (!game->world) {
+            TraceLog(LOG_ERROR, "Failed to create world");
+            return;
+        }
+    }
+    
     // Update world and all entities
-    UpdateWorld(game->world, deltaTime);
+    UpdateWorld(game->world, game->deltaTime);
 
     // Handle input
     if (IsKeyPressed(KEY_ESCAPE)) {
@@ -390,7 +402,7 @@ Game* CreateGame(void) {
 
     // Initialize game state
     game->state = GAME_STATE_PLAYING;
-    game->world = CreateWorld();
+    game->world = CreateWorld(ESTATE_WIDTH, ESTATE_HEIGHT, 9.81f, game->resources);
     if (!game->world) {
         free(game);
         return NULL;

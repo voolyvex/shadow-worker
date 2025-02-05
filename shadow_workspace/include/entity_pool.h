@@ -4,6 +4,7 @@
 #include <raylib.h>
 #include <stdbool.h>
 #include "entity_types.h"
+#include "constants.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,9 +14,6 @@ extern "C" {
 struct World;
 
 // Pool configuration
-#define INITIAL_POOL_SIZE 128
-#define MAX_POOL_SIZE 1024
-#define POOL_GROWTH_FACTOR 2
 #define POOL_MEMORY_ALIGNMENT 16
 
 // Pool status flags
@@ -40,28 +38,29 @@ typedef struct EntityPool {
 } EntityPool;
 
 // Core pool functions
-EntityPool* CreateEntityPool(void);
+EntityPool* CreateEntityPool(size_t initialCapacity);
 void DestroyEntityPool(EntityPool* pool);
 void UpdateEntityPool(EntityPool* pool, struct World* world, float deltaTime);
 void DrawEntityPool(EntityPool* pool);
 
 // Entity management
-Entity* SpawnEntity(EntityPool* pool, EntityType type, Vector2 position);
+Entity* CreateEntity(EntityPool* pool, EntityType type, Vector2 position);
 void RemoveEntity(EntityPool* pool, Entity* entity);
 Entity* GetEntityByType(EntityPool* pool, EntityType type);
 Entity* GetEntityAtPosition(EntityPool* pool, Vector2 position);
+Entity* GetFreeEntity(EntityPool* pool);
+size_t GetActiveCount(EntityPool* pool);
+float GetPoolUtilization(EntityPool* pool);
 
 // Pool maintenance
 PoolStatus GrowPool(EntityPool* pool);
 void CompactPool(EntityPool* pool);
 void ClearPool(EntityPool* pool);
-int GetActiveCount(EntityPool* pool);
-float GetPoolUtilization(EntityPool* pool);
 
 // Query functions
-Entity** GetEntitiesInRadius(EntityPool* pool, Vector2 center, float radius, int* count);
-Entity** GetEntitiesByType(EntityPool* pool, EntityType type, int* count);
-Entity** GetCollidingEntities(EntityPool* pool, Rectangle bounds, int* count);
+Entity** GetEntitiesInRadius(EntityPool* pool, Vector2 center, float radius, size_t* count);
+Entity** GetEntitiesByType(EntityPool* pool, EntityType type, size_t* count);
+Entity** GetCollidingEntities(EntityPool* pool, Rectangle bounds, size_t* count);
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,205 @@
+---
+description: Development Protocol Specification
+globs: 
+---
+
+## 1. Build System Integration
+
+### 1.1 Build Command Execution
+```yaml
+build_command:
+  primary: "build_and_test.bat"
+  execution_environment: "cmd.exe"
+  working_directory: "${PROJECT_ROOT}"
+  error_log: "./build_errors.log"
+  
+sequence:
+  - clean_artifacts
+  - compile_sources
+  - link_dependencies
+  - generate_report
+  - run_tests
+  - log_output
+```
+
+### 1.2 Terminal Selection Protocol
+```yaml
+terminal_rules:
+  - context: "windows_general"
+    terminal: "cmd.exe"
+    execution: "sequential"
+    
+  - context: "powershell_specific"
+    terminal: "powershell.exe"
+    execution: "single_command"
+    wait_for_completion: true
+```
+
+## 2. Documentation Management
+
+### 2.1 Directory Structure Validation
+```yaml
+docs_structure:
+  root: "/docs"
+  required_directories:
+    - architecture:
+        - system_design.md
+        - component_specs.md
+        - integration_patterns.md
+    - api:
+        - entity_system.md
+        - world_system.md
+        - map_system.md
+    - workflows:
+        - build_process.md
+        - testing_protocol.md
+  root_files:
+    - README.md
+```
+
+### 2.2 Update Protocol
+```yaml
+documentation_triggers:
+  - event: "feature_implementation"
+    update_scope: ["affected_systems", "api_docs"]
+  - event: "bug_fix"
+    update_scope: ["resolution_docs", "test_cases"]
+  - event: "api_change"
+    update_scope: ["api_docs", "integration_docs"]
+  - event: "build_system_modification"
+    update_scope: ["build_docs", "workflow_docs"]
+```
+
+## 3. Shadow Workspace Protocol
+
+### 3.1 Workspace Organization
+```yaml
+shadow_workspace:
+  structure:
+    - category: "source"
+      patterns: ["*.c", "*.h"]
+    - category: "tests"
+      patterns: ["*_test.c"]
+    - category: "assets"
+      patterns: ["*.png", "*.wav"]
+    - category: "build"
+      patterns: ["*.obj", "*.exe"]
+
+  versioning:
+    incremental_save: true
+    changelog_enabled: true
+    max_versions: 5
+```
+
+### 3.2 AI-Assisted Development
+```yaml
+ai_optimization:
+  code_patterns:
+    - entity_component_system:
+        template: "ecs_component_template.h"
+        validation: ["memory_alignment", "interface_consistency"]
+    
+    - raylib_integration:
+        template: "raylib_system_template.c"
+        validation: ["resource_management", "render_pipeline"]
+
+  analysis_rules:
+    - pattern_recognition:
+        scope: ["function_signatures", "memory_patterns"]
+    - optimization_suggestions:
+        focus: ["performance", "memory_usage"]
+```
+
+### 3.3 Validation Protocol
+```yaml
+validation_sequence:
+  - stage: "pre_commit"
+    checks:
+      - build_verification
+      - test_execution
+      - memory_analysis
+      - documentation_update
+
+  - stage: "integration"
+    checks:
+      - interface_compatibility
+      - resource_management
+      - event_propagation
+```
+
+## 4. Error Management
+
+### 4.1 Error Processing
+```yaml
+error_handling:
+  log_format: "[${TIMESTAMP}] [${SEVERITY}] [${SYSTEM}] ${MESSAGE}"
+  review_frequency: "after_each_build"
+  
+  categorization:
+    compilation:
+      - syntax_errors
+      - type_mismatches
+      - missing_declarations
+    
+    linker:
+      - undefined_references
+      - multiple_definitions
+    
+    runtime:
+      - memory_violations
+      - resource_management
+```
+
+### 4.2 Resolution Workflow
+```yaml
+resolution_steps:
+  1: "parse_error_log"
+  2: "categorize_issues"
+  3: "identify_root_cause"
+  4: "apply_fixes"
+  5: "document_resolution"
+  6: "update_tests"
+
+documentation_update:
+  affected_files:
+    - "${SYSTEM_DOC}.md"
+    - "build_process.md"
+    - "error_patterns.md"
+```
+
+## 5. Maintenance Schedule
+
+### 5.1 Task Frequency
+```yaml
+maintenance_schedule:
+  very_often:
+    - review_build_errors
+    - update_documentation
+    - verify_build_stability
+  
+  somewhat_often:
+    - full_test_execution
+    - performance_profiling
+    - documentation_review
+  
+  slightly_less_often:
+    - system_integration_review
+    - memory_leak_analysis
+    - api_compatibility_check
+```
+
+### 5.2 Version Control Integration
+```yaml
+commit_protocol:
+  sequence:
+    1: "implement_changes"
+    2: "update_docs"
+    3: "verify_tests"
+    4: "validate_build"
+    5: "resolve_errors"
+  
+  requirements:
+    - clean_build: true
+    - tests_passing: true
+    - docs_updated: true
+```

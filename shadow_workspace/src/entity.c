@@ -1,11 +1,18 @@
 #include "../include/entity.h"
 #include "../include/world.h"
+#include "../include/logger.h"
 #include <stdlib.h>
 #include <string.h>
 
 // Internal helper functions
 static void InitializeComponents(Entity* entity);
 static void ClearComponents(Entity* entity);
+static void InitializeTransformComponent(TransformComponent* component, Vector2 position);
+static void InitializePhysicsComponent(PhysicsComponent* component);
+static void InitializeRenderComponent(RenderComponent* component);
+static void InitializeColliderComponent(ColliderComponent* component);
+static void InitializeAIComponent(AIComponent* component);
+static void InitializePlayerControlComponent(PlayerControlComponent* component);
 
 // Component size lookup table
 static const size_t componentSizes[] = {
@@ -16,24 +23,6 @@ static const size_t componentSizes[] = {
     sizeof(AIComponent),
     sizeof(PlayerControlComponent)
 };
-
-Entity* CreateEntity(EntityType type) {
-    Entity* entity = (Entity*)calloc(1, sizeof(Entity));
-    if (!entity) return NULL;
-
-    entity->type = type;
-    entity->active = true;
-    entity->components = COMPONENT_NONE;
-
-    // Initialize components with default values
-    InitializeComponents(entity);
-
-    // Set default transform component (always present)
-    AddComponent(entity, COMPONENT_TRANSFORM);
-    entity->transform.scale = (Vector2){ 1.0f, 1.0f };
-
-    return entity;
-}
 
 void DestroyEntity(Entity* entity) {
     if (!entity) return;
@@ -53,17 +42,20 @@ void UpdateEntity(Entity* entity, struct World* world, float deltaTime) {
     if (!entity || !entity->active) return;
 
     // Update physics if component is present
-    if (HasComponent(entity, COMPONENT_PHYSICS)) {
-        entity->physics.velocity.x += entity->physics.acceleration.x * deltaTime;
-        entity->physics.velocity.y += entity->physics.acceleration.y * deltaTime;
+    PhysicsComponent* physics = GetPhysicsComponent(entity);
+    TransformComponent* transform = GetTransformComponent(entity);
+    
+    if (physics && transform) {
+        physics->velocity.x += physics->acceleration.x * deltaTime;
+        physics->velocity.y += physics->acceleration.y * deltaTime;
         
         // Apply friction
-        entity->physics.velocity.x *= (1.0f - entity->physics.friction * deltaTime);
-        entity->physics.velocity.y *= (1.0f - entity->physics.friction * deltaTime);
+        physics->velocity.x *= (1.0f - physics->friction * deltaTime);
+        physics->velocity.y *= (1.0f - physics->friction * deltaTime);
         
         // Update position
-        entity->transform.position.x += entity->physics.velocity.x * deltaTime;
-        entity->transform.position.y += entity->physics.velocity.y * deltaTime;
+        transform->position.x += physics->velocity.x * deltaTime;
+        transform->position.y += physics->velocity.y * deltaTime;
     }
 
     // Call custom update function if set
@@ -76,7 +68,8 @@ void DrawEntity(Entity* entity) {
     if (!entity || !entity->active) return;
 
     // Only draw if render component is present and visible
-    if (HasComponent(entity, COMPONENT_RENDER) && entity->render.visible) {
+    RenderComponent* render = GetRenderComponent(entity);
+    if (render && render->visible) {
         if (entity->Draw) {
             entity->Draw(entity);
         }
@@ -84,7 +77,7 @@ void DrawEntity(Entity* entity) {
 }
 
 void AddComponent(Entity* entity, ComponentFlags component) {
-    if (!entity || !entity->pool || !entity->pool->registry) return;
+    if (!entity) return;
     
     // Check if component already exists
     if (entity->components & component) return;
@@ -97,51 +90,72 @@ void AddComponent(Entity* entity, ComponentFlags component) {
         componentIndex++;
     }
 
-    // Add component to registry
-    void* componentData = AddComponentToRegistry(
-        entity->pool->registry,
-        componentIndex,
-        componentSizes[componentIndex]
-    );
-
-    if (!componentData) return;
-
-    // Initialize component data
-    memset(componentData, 0, componentSizes[componentIndex]);
+    // Initialize component data based on type
+    switch (component) {
+        case COMPONENT_TRANSFORM: {
+            TransformComponent* transform = &entity->components_data[componentIndex].transform;
+            transform->position = (Vector2){0.0f, 0.0f};
+            transform->rotation = 0.0f;
+            transform->scale = 1.0f;
+            break;
+        }
+        case COMPONENT_PHYSICS: {
+            PhysicsComponent* physics = &entity->components_data[componentIndex].physics;
+            physics->velocity = (Vector2){0.0f, 0.0f};
+            physics->acceleration = (Vector2){0.0f, 0.0f};
+            physics->friction = 0.5f;
+            physics->mass = 1.0f;
+            physics->isKinematic = false;
+            break;
+        }
+        case COMPONENT_RENDER: {
+            RenderComponent* render = &entity->components_data[componentIndex].render;
+            render->texture = NULL;
+            render->color = WHITE;
+            render->sourceRect = (Rectangle){0.0f, 0.0f, 32.0f, 32.0f};
+            render->origin = (Vector2){16.0f, 16.0f};
+            render->visible = true;
+            render->opacity = 1.0f;
+            break;
+        }
+        case COMPONENT_COLLIDER: {
+            ColliderComponent* collider = &entity->components_data[componentIndex].collider;
+            collider->bounds = (Rectangle){0.0f, 0.0f, 32.0f, 32.0f};
+            collider->isStatic = false;
+            collider->isTrigger = false;
+            collider->isEnabled = true;
+            break;
+        }
+        case COMPONENT_AI: {
+            AIComponent* ai = &entity->components_data[componentIndex].ai;
+            ai->patrolRadius = 100.0f;
+            ai->detectionRadius = 200.0f;
+            ai->homePosition = (Vector2){0.0f, 0.0f};
+            ai->targetPosition = (Vector2){0.0f, 0.0f};
+            ai->isAggressive = false;
+            ai->state = ENTITY_STATE_IDLE;
+            ai->stateTimer = 0.0f;
+            ai->animationFrame = 0;
+            ai->animationTimer = 0.0f;
+            break;
+        }
+        case COMPONENT_PLAYER_CONTROL: {
+            PlayerControlComponent* control = &entity->components_data[componentIndex].playerControl;
+            control->moveSpeed = 200.0f;
+            control->turnSpeed = 180.0f;
+            control->isInteracting = false;
+            break;
+        }
+        default:
+            break;
+    }
 
     // Update entity's component mask
     entity->components |= component;
-
-    // Store component data reference
-    entity->components_data[componentIndex] = componentData;
-
-    // Initialize default values based on component type
-    switch (component) {
-        case COMPONENT_TRANSFORM:
-            ((TransformComponent*)componentData)->scale = (Vector2){1.0f, 1.0f};
-            break;
-        case COMPONENT_PHYSICS:
-            ((PhysicsComponent*)componentData)->friction = 0.8f;
-            break;
-        case COMPONENT_RENDER:
-            ((RenderComponent*)componentData)->tint = WHITE;
-            break;
-        case COMPONENT_COLLIDER:
-            ((ColliderComponent*)componentData)->bounds = (Rectangle){0, 0, 32, 32};
-            break;
-        case COMPONENT_AI:
-            ((AIComponent*)componentData)->moveSpeed = 100.0f;
-            ((AIComponent*)componentData)->turnSpeed = 2.0f;
-            break;
-        case COMPONENT_PLAYER_CONTROL:
-            ((PlayerControlComponent*)componentData)->moveSpeed = 200.0f;
-            ((PlayerControlComponent*)componentData)->turnSpeed = 4.0f;
-            break;
-    }
 }
 
 void RemoveComponent(Entity* entity, ComponentFlags component) {
-    if (!entity || !entity->pool || !entity->pool->registry) return;
+    if (!entity) return;
 
     // Check if component exists
     if (!(entity->components & component)) return;
@@ -154,50 +168,46 @@ void RemoveComponent(Entity* entity, ComponentFlags component) {
         componentIndex++;
     }
 
-    // Calculate entity index in pool
-    size_t entityId = entity - entity->pool->entities;
-
-    // Remove component from registry
-    RemoveComponentFromRegistry(entity->pool->registry, componentIndex, entityId);
+    // Clear component data
+    memset(&entity->components_data[componentIndex], 0, sizeof(ComponentData));
 
     // Update entity's component mask
     entity->components &= ~component;
-    entity->components_data[componentIndex] = NULL;
 }
 
 bool HasComponent(const Entity* entity, ComponentFlags component) {
     return entity && (entity->components & component);
 }
 
-// Component getter functions
+// Component access functions
 TransformComponent* GetTransformComponent(Entity* entity) {
-    return HasComponent(entity, COMPONENT_TRANSFORM) ? 
-        (TransformComponent*)entity->components_data[0] : NULL;
+    if (!entity || !HasComponent(entity, COMPONENT_TRANSFORM)) return NULL;
+    return &entity->components_data[0].transform;
 }
 
 PhysicsComponent* GetPhysicsComponent(Entity* entity) {
-    return HasComponent(entity, COMPONENT_PHYSICS) ? 
-        (PhysicsComponent*)entity->components_data[1] : NULL;
+    if (!entity || !HasComponent(entity, COMPONENT_PHYSICS)) return NULL;
+    return &entity->components_data[1].physics;
 }
 
 RenderComponent* GetRenderComponent(Entity* entity) {
-    return HasComponent(entity, COMPONENT_RENDER) ? 
-        (RenderComponent*)entity->components_data[2] : NULL;
+    if (!entity || !HasComponent(entity, COMPONENT_RENDER)) return NULL;
+    return &entity->components_data[2].render;
 }
 
 ColliderComponent* GetColliderComponent(Entity* entity) {
-    return HasComponent(entity, COMPONENT_COLLIDER) ? 
-        (ColliderComponent*)entity->components_data[3] : NULL;
+    if (!entity || !HasComponent(entity, COMPONENT_COLLIDER)) return NULL;
+    return &entity->components_data[3].collider;
 }
 
 AIComponent* GetAIComponent(Entity* entity) {
-    return HasComponent(entity, COMPONENT_AI) ? 
-        (AIComponent*)entity->components_data[4] : NULL;
+    if (!entity || !HasComponent(entity, COMPONENT_AI)) return NULL;
+    return &entity->components_data[4].ai;
 }
 
 PlayerControlComponent* GetPlayerControlComponent(Entity* entity) {
-    return HasComponent(entity, COMPONENT_PLAYER_CONTROL) ? 
-        (PlayerControlComponent*)entity->components_data[5] : NULL;
+    if (!entity || !HasComponent(entity, COMPONENT_PLAYER_CONTROL)) return NULL;
+    return &entity->components_data[5].playerControl;
 }
 
 void UpdateEntityPosition(Entity* entity, Vector2 newPosition) {
@@ -219,17 +229,21 @@ void UpdateEntityPosition(Entity* entity, Vector2 newPosition) {
     }
 }
 
-bool CheckEntityCollision(Entity* a, Entity* b) {
+static bool CheckEntityCollisionInternal(Entity* a, Entity* b) {
     if (!a || !b || !a->active || !b->active) return false;
-    if (!HasComponent(a, COMPONENT_COLLIDER) || !HasComponent(b, COMPONENT_COLLIDER)) return false;
-
-    return CheckCollisionRecs(a->collider.bounds, b->collider.bounds);
+    
+    ColliderComponent* colliderA = GetColliderComponent(a);
+    ColliderComponent* colliderB = GetColliderComponent(b);
+    
+    if (!colliderA || !colliderB) return false;
+    
+    return CheckCollisionRecs(colliderA->bounds, colliderB->bounds);
 }
 
 void HandleEntityCollision(Entity* a, Entity* b) {
     if (!a || !b || !a->active || !b->active) return;
 
-    if (CheckEntityCollision(a, b)) {
+    if (CheckEntityCollisionInternal(a, b)) {
         // Call collision callbacks if set
         if (a->OnCollision) a->OnCollision(a, b);
         if (b->OnCollision) b->OnCollision(b, a);
@@ -241,61 +255,78 @@ static void InitializeComponents(Entity* entity) {
     if (!entity) return;
 
     // Initialize transform component (always present)
-    InitializeTransformComponent(&entity->components_data[0].transform);
+    InitializeTransformComponent(&entity->components_data[0].transform, (Vector2){0.0f, 0.0f});
 
     // Clear all other components
-    memset(&entity->components_data[1], 0, sizeof(ComponentData) * (MAX_COMPONENTS - 1));
+    memset(&entity->components_data[1], 0, sizeof(ComponentData));
+    memset(&entity->components_data[2], 0, sizeof(ComponentData));
+    memset(&entity->components_data[3], 0, sizeof(ComponentData));
+    memset(&entity->components_data[4], 0, sizeof(ComponentData));
+    memset(&entity->components_data[5], 0, sizeof(ComponentData));
+    
+    entity->components = COMPONENT_NONE;
 }
 
 static void ClearComponents(Entity* entity) {
     if (!entity) return;
     
     // Clear all component data
-    memset(&entity->transform, 0, sizeof(TransformComponent));
-    memset(&entity->physics, 0, sizeof(PhysicsComponent));
-    memset(&entity->render, 0, sizeof(RenderComponent));
-    memset(&entity->collider, 0, sizeof(ColliderComponent));
-    memset(&entity->ai, 0, sizeof(AIComponent));
-    memset(&entity->playerControl, 0, sizeof(PlayerControlComponent));
+    memset(&entity->components_data[0].transform, 0, sizeof(TransformComponent));
+    memset(&entity->components_data[1].physics, 0, sizeof(PhysicsComponent));
+    memset(&entity->components_data[2].render, 0, sizeof(RenderComponent));
+    memset(&entity->components_data[3].collider, 0, sizeof(ColliderComponent));
+    memset(&entity->components_data[4].ai, 0, sizeof(AIComponent));
+    memset(&entity->components_data[5].playerControl, 0, sizeof(PlayerControlComponent));
     
     entity->components = COMPONENT_NONE;
 }
 
 // Component constructors
-static void InitializeTransformComponent(TransformComponent* component) {
+static void InitializeTransformComponent(TransformComponent* component, Vector2 position) {
     if (!component) return;
-    component->position = (Vector2){0, 0};
-    component->scale = (Vector2){1.0f, 1.0f};
+    component->position = position;
     component->rotation = 0.0f;
+    component->scale = 1.0f;
 }
 
 static void InitializePhysicsComponent(PhysicsComponent* component) {
     if (!component) return;
-    component->velocity = (Vector2){0, 0};
-    component->acceleration = (Vector2){0, 0};
+    component->velocity = (Vector2){0.0f, 0.0f};
+    component->acceleration = (Vector2){0.0f, 0.0f};
     component->friction = 0.5f;
+    component->mass = 1.0f;
+    component->isKinematic = false;
 }
 
 static void InitializeRenderComponent(RenderComponent* component) {
     if (!component) return;
-    component->tint = WHITE;
-    component->sourceRect = (Rectangle){0, 0, 32, 32};
-    component->origin = (Vector2){16, 16};
+    component->texture = NULL;
+    component->color = WHITE;
+    component->sourceRect = (Rectangle){0.0f, 0.0f, 32.0f, 32.0f};
+    component->origin = (Vector2){16.0f, 16.0f};
+    component->visible = true;
+    component->opacity = 1.0f;
 }
 
 static void InitializeColliderComponent(ColliderComponent* component) {
     if (!component) return;
-    component->bounds = (Rectangle){0, 0, 32, 32};
+    component->bounds = (Rectangle){0.0f, 0.0f, 32.0f, 32.0f};
     component->isStatic = false;
+    component->isTrigger = false;
+    component->isEnabled = true;
 }
 
 static void InitializeAIComponent(AIComponent* component) {
     if (!component) return;
-    component->state = NPC_STATE_IDLE;
     component->patrolRadius = 100.0f;
-    component->moveSpeed = 100.0f;
-    component->turnSpeed = 90.0f;
-    component->homePosition = (Vector2){0, 0};
+    component->detectionRadius = 200.0f;
+    component->homePosition = (Vector2){0.0f, 0.0f};
+    component->targetPosition = (Vector2){0.0f, 0.0f};
+    component->isAggressive = false;
+    component->state = ENTITY_STATE_IDLE;
+    component->stateTimer = 0.0f;
+    component->animationFrame = 0;
+    component->animationTimer = 0.0f;
 }
 
 static void InitializePlayerControlComponent(PlayerControlComponent* component) {
@@ -307,7 +338,7 @@ static void InitializePlayerControlComponent(PlayerControlComponent* component) 
 
 // Game-specific entity creation functions
 Entity* CreatePlayerEntity(EntityPool* pool, Vector2 position) {
-    Entity* entity = CreateEntity(pool, ENTITY_TYPE_PLAYER);
+    Entity* entity = CreateEntity(pool, ENTITY_TYPE_PLAYER, position);
     if (!entity) return NULL;
 
     // Add required components
@@ -319,37 +350,47 @@ Entity* CreatePlayerEntity(EntityPool* pool, Vector2 position) {
 
     // Initialize transform
     TransformComponent* transform = GetTransformComponent(entity);
-    transform->position = position;
-    transform->rotation = 0.0f;
-    transform->scale = (Vector2){1.0f, 1.0f};
+    if (transform) {
+        transform->position = position;
+        transform->rotation = 0.0f;
+        transform->scale = 1.0f;
+    }
 
     // Initialize physics
     PhysicsComponent* physics = GetPhysicsComponent(entity);
-    physics->velocity = (Vector2){0, 0};
-    physics->acceleration = (Vector2){0, 0};
-    physics->friction = 0.5f;
+    if (physics) {
+        physics->velocity = (Vector2){0, 0};
+        physics->acceleration = (Vector2){0, 0};
+        physics->friction = 0.5f;
+    }
 
     // Initialize render
     RenderComponent* render = GetRenderComponent(entity);
-    render->tint = WHITE;
-    render->sourceRect = (Rectangle){0, 0, 32, 32};
-    render->origin = (Vector2){16, 16};
+    if (render) {
+        render->color = WHITE;
+        render->sourceRect = (Rectangle){0, 0, 32, 32};
+        render->origin = (Vector2){16, 16};
+    }
 
     // Initialize collider
     ColliderComponent* collider = GetColliderComponent(entity);
-    collider->bounds = (Rectangle){position.x - 16, position.y - 16, 32, 32};
-    collider->isStatic = false;
+    if (collider) {
+        collider->bounds = (Rectangle){position.x - 16, position.y - 16, 32, 32};
+        collider->isStatic = false;
+    }
 
     // Initialize player control
     PlayerControlComponent* control = GetPlayerControlComponent(entity);
-    control->moveSpeed = 200.0f;
-    control->turnSpeed = 180.0f;
+    if (control) {
+        control->moveSpeed = 200.0f;
+        control->turnSpeed = 180.0f;
+    }
 
     return entity;
 }
 
 Entity* CreateNPCEntity(EntityPool* pool, Vector2 position) {
-    Entity* entity = CreateEntity(pool, ENTITY_TYPE_NPC);
+    Entity* entity = CreateEntity(pool, ENTITY_TYPE_NPC, position);
     if (!entity) return NULL;
 
     // Add required components
@@ -361,34 +402,43 @@ Entity* CreateNPCEntity(EntityPool* pool, Vector2 position) {
 
     // Initialize transform
     TransformComponent* transform = GetTransformComponent(entity);
-    transform->position = position;
-    transform->rotation = 0.0f;
-    transform->scale = (Vector2){1.0f, 1.0f};
+    if (transform) {
+        transform->position = position;
+        transform->rotation = 0.0f;
+        transform->scale = 1.0f;
+    }
 
     // Initialize physics
     PhysicsComponent* physics = GetPhysicsComponent(entity);
-    physics->velocity = (Vector2){0, 0};
-    physics->acceleration = (Vector2){0, 0};
-    physics->friction = 0.5f;
+    if (physics) {
+        physics->velocity = (Vector2){0, 0};
+        physics->acceleration = (Vector2){0, 0};
+        physics->friction = 0.5f;
+    }
 
     // Initialize render
     RenderComponent* render = GetRenderComponent(entity);
-    render->tint = WHITE;
-    render->sourceRect = (Rectangle){0, 0, 32, 32};
-    render->origin = (Vector2){16, 16};
+    if (render) {
+        render->color = WHITE;
+        render->sourceRect = (Rectangle){0, 0, 32, 32};
+        render->origin = (Vector2){16, 16};
+    }
 
     // Initialize collider
     ColliderComponent* collider = GetColliderComponent(entity);
-    collider->bounds = (Rectangle){position.x - 16, position.y - 16, 32, 32};
-    collider->isStatic = false;
+    if (collider) {
+        collider->bounds = (Rectangle){position.x - 16, position.y - 16, 32, 32};
+        collider->isStatic = false;
+    }
 
     // Initialize AI
     AIComponent* ai = GetAIComponent(entity);
-    ai->state = NPC_STATE_IDLE;
-    ai->patrolRadius = 100.0f;
-    ai->moveSpeed = 100.0f;
-    ai->turnSpeed = 90.0f;
-    ai->homePosition = position;
+    if (ai) {
+        ai->state = ENTITY_STATE_IDLE;
+        ai->patrolRadius = 100.0f;
+        ai->detectionRadius = 200.0f;
+        ai->homePosition = position;
+    }
 
     return entity;
 }
@@ -400,7 +450,8 @@ void IterateComponents(Entity* entity, void (*callback)(void* component, Compone
     ComponentFlags flag = 1;
     for (int i = 0; i < MAX_COMPONENT_TYPES; i++, flag <<= 1) {
         if (entity->components & flag) {
-            callback(entity->components_data[i], flag);
+            void* componentPtr = &entity->components_data[i];
+            callback(componentPtr, flag);
         }
     }
 }
@@ -411,6 +462,15 @@ void IterateActiveEntities(EntityPool* pool, void (*callback)(Entity* entity)) {
     for (size_t i = 0; i < pool->capacity; i++) {
         if (pool->active[i]) {
             callback(&pool->entities[i]);
+        }
+    }
+}
+
+void ForEachEntity(Entity* entities, size_t count, void (*callback)(Entity*)) {
+    if (!entities || !callback) return;
+    for (size_t i = 0; i < count; i++) {
+        if (entities[i].active) {
+            callback(&entities[i]);
         }
     }
 } 
