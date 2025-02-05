@@ -1,17 +1,38 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: Set up Visual Studio environment if needed
+:: Set up Visual Studio environment
 if not defined VSINSTALLDIR (
     echo Setting up Visual Studio environment...
     call "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat" -arch=x64
 )
 
+:: Unified build directory
+set BUILD_DIR=%cd%\build
+set BUILD_CONFIG=Debug
+
+:: Clean build directory
+if exist "%BUILD_DIR%" (
+    echo Cleaning build directory...
+    rmdir /S /Q "%BUILD_DIR%"
+)
+
+:: Create build directory
+mkdir "%BUILD_DIR%"
+cd "%BUILD_DIR%"
+
+:: Configure CMake
+cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=%BUILD_CONFIG% ..
+
+:: Build project
+cmake --build . --config %BUILD_CONFIG%
+
+:: Run tests
+ctest -C %BUILD_CONFIG% --output-on-failure
+
 :: Store original directory and set paths
 set SOURCE_DIR=%cd%
 set SHADOW_WORKSPACE=%SOURCE_DIR%\shadow_workspace
-set BUILD_DIR=%SOURCE_DIR%\build
-set BUILD_CONFIG=Debug
 set TEST_CONFIG=Debug
 set LOGFILE=%SOURCE_DIR%\build_output.log
 set ERRORLOG=%SOURCE_DIR%\build_errors.log
@@ -115,51 +136,6 @@ if exist "CMakeLists.txt" (
         cd "%SOURCE_DIR%"
         exit /b 1
     )
-)
-
-:: Create and navigate to build directory
-if exist "%BUILD_DIR%" (
-    call :log "Cleaning build directory..."
-    rmdir /S /Q "%BUILD_DIR%"
-    if errorlevel 1 (
-        call :log "Error: Failed to clean build directory"
-        exit /b 1
-    )
-)
-
-call :log "Creating build directory..."
-mkdir "%BUILD_DIR%"
-if errorlevel 1 (
-    call :log "Error: Failed to create build directory"
-    exit /b 1
-)
-
-cd "%BUILD_DIR%" || (
-    call :log "Error: Failed to navigate to build directory"
-    cd "%SOURCE_DIR%"
-    exit /b 1
-)
-
-:: Configure CMake with detailed error reporting
-call :log "Configuring CMake..."
-cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=%BUILD_CONFIG% "%SHADOW_WORKSPACE%" > cmake_output.txt 2>&1
-if errorlevel 1 (
-    call :log "Error: CMake configuration failed"
-    type cmake_output.txt >> %ERRORLOG%
-    type cmake_output.txt
-    cd "%SOURCE_DIR%"
-    exit /b 1
-)
-
-:: Build with detailed error reporting
-call :log "Building %BUILD_CONFIG% configuration..."
-cmake --build . --config %BUILD_CONFIG% > build_output.txt 2>&1
-if errorlevel 1 (
-    call :log "Error: Build failed"
-    type build_output.txt >> %ERRORLOG%
-    type build_output.txt
-    cd "%SOURCE_DIR%"
-    exit /b 1
 )
 
 :: Run tests with detailed output

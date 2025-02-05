@@ -42,28 +42,31 @@ if(MSVC)
     )
 endif()
 
-# Build type configuration
+# Unified build directory configuration
+set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# Configure multi-configuration output directories
+if(CMAKE_CONFIGURATION_TYPES)
+    foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+        string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${OUTPUTCONFIG})
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${OUTPUTCONFIG})
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${OUTPUTCONFIG})
+    endforeach()
+endif()
+
+# Add build type configuration
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
 endif()
 
 # Set workspace and source directories
 set(WORKSPACE_DIR ${CMAKE_SOURCE_DIR}/shadow_workspace)
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
-
-# Output directories with proper debug/release handling
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKSPACE_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${WORKSPACE_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${WORKSPACE_DIR}/lib)
-
-if(WIN32)
-    foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
-        string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${WORKSPACE_DIR}/bin/${OUTPUTCONFIG}")
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${WORKSPACE_DIR}/lib/${OUTPUTCONFIG}")
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${WORKSPACE_DIR}/lib/${OUTPUTCONFIG}")
-    endforeach()
-endif()
 
 # Configure testing
 enable_testing()

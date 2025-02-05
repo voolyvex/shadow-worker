@@ -51,25 +51,32 @@ if(CMAKE_COMPILER_IS_GNUCC)
     target_link_options(sw_test_suite PRIVATE --coverage)
 endif()
 
-# Ensure test resources directory exists
-file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/resources)
+# Test output directory
+set(TEST_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests)
+file(MAKE_DIRECTORY ${TEST_OUTPUT_DIR})
 
-# Copy test resources maintaining directory structure
+# Test resources setup
+set(TEST_RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
+set(TEST_RESOURCES_OUTPUT_DIR ${TEST_OUTPUT_DIR}/resources)
+
+# Copy test resources
 add_custom_command(TARGET sw_test_suite POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_CURRENT_SOURCE_DIR}/resources ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/resources
+    ${TEST_RESOURCES_DIR} ${TEST_RESOURCES_OUTPUT_DIR}
 )
 
 # Register the test with CTest
 add_test(
     NAME AllTests
     COMMAND sw_test_suite
-    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    WORKING_DIRECTORY ${TEST_OUTPUT_DIR}
 )
 
-# Configure test properties
+# Update test properties
 set_tests_properties(AllTests PROPERTIES
     FAIL_REGULAR_EXPRESSION "FAILED"
     PASS_REGULAR_EXPRESSION "PASSED"
     TIMEOUT 300
+    WORKING_DIRECTORY ${TEST_OUTPUT_DIR}
+    ENVIRONMENT "TEST_RESOURCES_DIR=${TEST_RESOURCES_OUTPUT_DIR}"
 ) 

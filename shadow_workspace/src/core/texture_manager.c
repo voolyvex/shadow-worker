@@ -1,6 +1,0 @@
-#include "texture_manager.h"
-#include "texture_atlas.h"
-#include <raylib.h>
-
-// Other texture manager functions can go here...
-// ... existing code ... 
