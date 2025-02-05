@@ -1,61 +1,88 @@
 # Shadow Worker Documentation
 
-## Introduction
+Welcome to the Shadow Worker documentation. This documentation is organized into several sections for easy navigation.
 
-Welcome to the Shadow Worker documentation. This documentation provides comprehensive information about the game engine's architecture, APIs, and development workflows.
+## Quick Links
+
+- [Getting Started](getting_started/README.md)
+- [Architecture Overview](architecture/system_design.md)
+- [API Reference](api/README.md)
+- [Development Guides](guides/README.md)
 
 ## Documentation Structure
 
-### Architecture
-- [System Design](architecture/system_design.md): Overall system architecture and design principles
-- [Component Specifications](architecture/component_specs.md): Detailed component specifications
-- [Integration Patterns](architecture/integration_patterns.md): System integration patterns and guidelines
+```
+docs/
+├── getting_started/           # Getting started guides
+│   ├── README.md             # Quick start guide
+│   ├── installation.md       # Installation instructions
+│   └── build_guide.md        # Build instructions
+│
+├── architecture/             # Architecture documentation
+│   ├── system_design.md      # Overall system design
+│   ├── resource_system.md    # Resource management
+│   ├── entity_system.md      # Entity system design
+│   └── world_system.md       # World and map systems
+│
+├── api/                      # API documentation
+│   ├── README.md            # API overview
+│   ├── resource_manager.md  # Resource Manager API
+│   ├── map_system.md       # Map System API
+│   └── entity_system.md    # Entity System API
+│
+├── guides/                   # Development guides
+│   ├── README.md           # Guide overview
+│   ├── coding_standards.md # Coding standards
+│   ├── testing.md         # Testing guide
+│   └── debugging.md       # Debugging guide
+│
+└── workflows/               # Development workflows
+    ├── build_process.md    # Build process
+    ├── testing_flow.md     # Testing workflow
+    └── release_flow.md     # Release process
+```
 
-### API Documentation
-- [Entity System](api/entity_system.md): Entity component system documentation
-- [World System](api/world_system.md): World management system documentation
-- [Map System](api/map_system.md): Map and tile system documentation
+## Current Status
 
-### Workflows
-- [Build Process](workflows/build_process.md): Build system and compilation guide
-- [Testing Protocol](workflows/testing_protocol.md): Testing procedures and guidelines
+⚠️ **Note:** Project is currently in prototype phase. Some documentation may be incomplete or subject to change.
 
-## Getting Started
+## Documentation Guidelines
 
-1. Review the [System Design](architecture/system_design.md) document for an overview
-2. Follow the [Build Process](workflows/build_process.md) guide to set up your environment
-3. Check the API documentation for specific system details
-4. Refer to the workflow guides for development procedures
+1. **Organization**
+   - Each major component has its own directory
+   - Each directory contains a README.md for overview
+   - API documentation follows standard format
+   - Examples included where appropriate
 
-## Documentation Updates
+2. **Maintenance**
+   - Documentation updated with code changes
+   - Examples tested and verified
+   - Links checked regularly
+   - Version numbers kept current
 
-The documentation is updated according to the following triggers:
-- Feature implementation
-- Bug fixes
-- API changes
-- Build system modifications
+3. **Style**
+   - Clear and concise language
+   - Consistent formatting
+   - Code examples in appropriate language blocks
+   - Screenshots and diagrams where helpful
 
 ## Contributing
 
-When contributing to the documentation:
-1. Follow the established directory structure
-2. Update relevant sections based on changes
-3. Maintain consistent formatting
-4. Include code examples where appropriate
-5. Update the changelog
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines on:
+- Documentation style guide
+- How to submit changes
+- Documentation review process
+- Building documentation locally
 
 ## Version Control
 
-Documentation versions are maintained alongside code versions. Each release includes:
-- Updated API documentation
-- New feature documentation
-- Bug fix documentation
-- Updated workflow guides
+- Documentation versions match code releases
+- Breaking changes clearly marked
+- Deprecated features noted
+- Migration guides provided
 
-## Support
+## Getting Help
 
-For documentation issues or questions:
-1. Check existing documentation
-2. Review related code
-3. Check version compatibility
-4. Consult the troubleshooting guides 
+- [Issue Tracker](https://github.com/yourusername/shadow-worker/issues)
+- [Discussion Forum](https://github.com/yourusername/shadow-worker/discussions)
+- [Development Wiki](https://github.com/yourusername/shadow-worker/wiki) 
