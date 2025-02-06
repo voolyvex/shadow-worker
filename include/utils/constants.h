@@ -1,0 +1,83 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+// Memory management constants
+#define INITIAL_POOL_SIZE 32
+#define POOL_GROWTH_FACTOR 2
+
+// Map dimensions
+#define ESTATE_WIDTH 64
+#define ESTATE_HEIGHT 64
+#define LEVEL_WIDTH 128
+#define LEVEL_HEIGHT 128
+#define COURTYARD_SIZE 16
+
+// Tile size
+#define TILE_SIZE 32
+
+// Tile types
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum TileType {
+    TILE_NONE = 0,
+    TILE_EMPTY,
+    TILE_FLOOR,
+    TILE_WALL,
+    TILE_DOOR,
+    TILE_WINDOW,
+    TILE_GARDEN,
+    TILE_WATER,
+    TILE_GRASS,
+    TILE_PATH,
+    TILE_COUNT
+} TileType;
+
+// Ensure TileType is available for array sizes
+#define TILE_TYPE_COUNT (TILE_COUNT - 1)
+
+#ifdef __cplusplus
+}
+#endif
+
+// Game constants
+#define MAX_ENTITIES 1024
+#define MAX_OBJECTS 512
+#define MAX_RESOURCES 256
+
+// Window dimensions
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720
+
+// Physics constants
+#define GRAVITY 9.81f
+#define DEFAULT_FRICTION 1.0f
+
+// Resource paths
+#define TILESET_PATH "resources/maps/tileset_main.png"
+#define FONT_PATH "resources/fonts/main.ttf"
+
+#define WORLD_WIDTH 100
+#define WORLD_HEIGHT 100
+
+// Resource limits
+#define MAX_TEXTURES 128
+#define MAX_TEXTURE_ATLASES 64
+#define MAX_SOUNDS 128
+#define MAX_MUSIC 32
+#define MAX_FONTS 16
+#define MAX_SHADERS 16
+#define MAX_LAYERS 8  // Maximum number of map layers
+
+// Audio settings
+#define MAX_SOUND_INSTANCES 32
+#define DEFAULT_MUSIC_VOLUME 1.0f
+#define DEFAULT_SOUND_VOLUME 1.0f
+
+// Memory limits
+#define MAX_PATH_LENGTH 256
+#define MAX_NAME_LENGTH 64
+#define MAX_STRING_LENGTH 1024
+
+#endif // CONSTANTS_H 

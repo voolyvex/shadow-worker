@@ -1,8 +1,9 @@
-#ifndef NPC_H
-#define NPC_H
+#ifndef SHADOW_WORKER_NPC_H
+#define SHADOW_WORKER_NPC_H
 
-#include "../entity.h"
-#include "../entity_types.h"
+#include "entities/entity.h"
+#include "world/world.h"
+#include "utils/constants.h"
 #include <raylib.h>
 
 // Entity dimensions

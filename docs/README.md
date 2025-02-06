@@ -1,6 +1,77 @@
 # Shadow Worker Documentation
 
-Welcome to the Shadow Worker documentation. This documentation is organized into several sections for easy navigation.
+## Project Structure
+
+```
+shadow-worker/
+├── include/                 # Public headers
+│   ├── core/               # Core system headers
+│   ├── entities/           # Entity system headers
+│   ├── world/             # World and map headers
+│   ├── resource/          # Resource management headers
+│   └── utils/             # Utility headers
+├── src/                    # Implementation files
+│   ├── core/              # Core system implementations
+│   ├── entities/          # Entity implementations
+│   ├── world/             # World system implementations
+│   ├── resource/          # Resource implementations
+│   └── utils/             # Utility implementations
+├── tests/                  # Test suite
+│   ├── include/           # Test headers
+│   ├── suites/           # Test implementations
+│   └── resources/         # Test-specific resources
+├── docs/                   # Documentation
+│   ├── api/               # API documentation
+│   ├── guides/            # Development guides
+│   └── architecture/      # Architecture documentation
+└── resources/             # Game resources
+```
+
+## Documentation Structure
+
+1. **API Documentation** (`api/`)
+   - Complete API reference
+   - Function documentation
+   - Type definitions
+   - Usage examples
+
+2. **Development Guides** (`guides/`)
+   - Getting started
+   - Build instructions
+   - Testing procedures
+   - Best practices
+
+3. **Architecture** (`architecture/`)
+   - System design
+   - Component relationships
+   - Data flow
+   - Performance considerations
+
+## Key Systems
+
+1. **Core Systems** (`include/core/`)
+   - Component management
+   - Memory handling
+   - Basic utilities
+
+2. **Entity System** (`include/entities/`)
+   - Entity management
+   - Component data
+   - Entity behaviors
+
+3. **World System** (`include/world/`)
+   - World state
+   - Map management
+   - Physics and collision
+
+4. **Resource Management** (`include/resource/`)
+   - Asset loading
+   - Resource caching
+   - Memory management
+
+## Building and Testing
+
+See `guides/README.md` for detailed build instructions and testing procedures.
 
 ## Quick Links
 
@@ -8,39 +79,6 @@ Welcome to the Shadow Worker documentation. This documentation is organized into
 - [Architecture Overview](architecture/system_design.md)
 - [API Reference](api/README.md)
 - [Development Guides](guides/README.md)
-
-## Documentation Structure
-
-```
-docs/
-├── getting_started/           # Getting started guides
-│   ├── README.md             # Quick start guide
-│   ├── installation.md       # Installation instructions
-│   └── build_guide.md        # Build instructions
-│
-├── architecture/             # Architecture documentation
-│   ├── system_design.md      # Overall system design
-│   ├── resource_system.md    # Resource management
-│   ├── entity_system.md      # Entity system design
-│   └── world_system.md       # World and map systems
-│
-├── api/                      # API documentation
-│   ├── README.md            # API overview
-│   ├── resource_manager.md  # Resource Manager API
-│   ├── map_system.md       # Map System API
-│   └── entity_system.md    # Entity System API
-│
-├── guides/                   # Development guides
-│   ├── README.md           # Guide overview
-│   ├── coding_standards.md # Coding standards
-│   ├── testing.md         # Testing guide
-│   └── debugging.md       # Debugging guide
-│
-└── workflows/               # Development workflows
-    ├── build_process.md    # Build process
-    ├── testing_flow.md     # Testing workflow
-    └── release_flow.md     # Release process
-```
 
 ## Current Status
 

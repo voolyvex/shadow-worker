@@ -1,5 +1,84 @@
 # Shadow Worker API Documentation
 
+## Project Structure
+
+The codebase is organized into the following main categories:
+
+### Core Systems (`include/core/`)
+- `component_flags.h`: Component type definitions and bit flags
+- `component_registry.h`: Component storage and management system
+- `logger.h`: Logging utilities
+- `warning_suppression.h`: Warning management
+
+### Entity System (`include/entities/`)
+- `entity.h`: Entity management and manipulation
+- `entity_pool.h`: Entity pooling and lifecycle
+- `entity_types.h`: Entity component structures
+- `player.h`: Player-specific functionality
+- `npc.h`: NPC behavior and management
+
+### World System (`include/world/`)
+- `world.h`: World state and management
+- `world_gen.h`: Procedural world generation
+- `map_system.h`: Map management and operations
+- `map_types.h`: Map data structures
+- `estate_map.h`: Estate-specific map functionality
+
+### Resource Management (`include/resource/`)
+- `resource_manager.h`: Resource management system
+- `resource_types.h`: Resource type definitions
+- `texture_manager.h`: Texture loading and management
+- `texture_atlas.h`: Texture atlas system
+- `sound_manager.h`: Sound resource management
+
+### Utilities (`include/utils/`)
+- `debug.h`: Debugging utilities
+- `constants.h`: Global constants
+- `object_types.h`: Basic object type definitions
+
+## Component System
+
+The component system is built on two main pillars:
+1. Component Flags (`component_flags.h`): Defines WHAT components exist
+2. Component Registry (`component_registry.h`): Manages HOW components are stored
+
+### Component Types
+Each component serves a specific purpose:
+- Transform: Position, rotation, scale
+- Physics: Movement, forces, collisions
+- Render: Visual representation
+- Collider: Collision detection
+- AI: NPC behavior
+- Player: Player-specific controls
+
+### Usage Example
+```c
+// Create an entity with transform and render components
+Entity* entity = CreateEntity();
+AddComponent(entity, COMPONENT_TRANSFORM | COMPONENT_RENDER);
+
+// Initialize components
+TransformComponent* transform = GetTransformComponent(entity);
+InitializeTransformComponent(transform, (Vector2){0, 0});
+
+RenderComponent* render = GetRenderComponent(entity);
+InitializeRenderComponent(render);
+```
+
+## Build System
+The project uses CMake for build configuration. Source files are organized to mirror the include directory structure:
+
+```
+src/
+├── core/
+├── entities/
+├── world/
+├── resource/
+└── utils/
+```
+
+Each implementation file corresponds to its header in the include directory.
+
 ## Overview
 
 The Shadow Worker API is organized into several core systems that work together to provide game functionality.

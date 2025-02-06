@@ -1,8 +1,10 @@
 #ifndef SHADOW_WORKER_PLAYER_H
 #define SHADOW_WORKER_PLAYER_H
 
+#include "entities/entity.h"
+#include "world/world.h"
+#include "utils/constants.h"
 #include <raylib.h>
-#include "../../include/world.h"
 
 typedef struct PlayerData {
     Vector2 position;

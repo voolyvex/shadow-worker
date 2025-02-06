@@ -1,10 +1,13 @@
-#include "../../include/entities/player.h"
-#include "../../include/sound_manager.h"
-#include "../../include/world.h"
-#include "../../include/resource_manager.h"
-#include "../../include/game.h"
-#include "../../include/logger.h"
+#include "utils/warning_suppression.h"
+#include "entities/player.h"
+#include "entities/entity.h"
+#include "world/world.h"
+#include "utils/debug.h"
+#include "utils/constants.h"
+#include <raymath.h>  // Must come before raylib.h
+#include <raylib.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 // Forward declarations

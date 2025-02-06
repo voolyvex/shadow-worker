@@ -6,6 +6,13 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+# Windows-specific configuration
+if(WIN32)
+    enable_language(RC)
+    set(CMAKE_RC_COMPILER_INIT windres)
+    set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
+endif()
+
 # Store original compiler flags
 set(ORIGINAL_C_FLAGS ${CMAKE_C_FLAGS})
 
@@ -65,8 +72,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Set workspace and source directories
-set(WORKSPACE_DIR ${CMAKE_SOURCE_DIR}/shadow_workspace)
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
+set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 
 # Configure testing
 enable_testing()
@@ -75,123 +82,97 @@ include(CTest)
 # Add external dependencies first
 add_subdirectory(external/raylib)
 
-# Define source files using file(GLOB ...)
-file(GLOB CORE_SOURCES
-    "${SOURCE_DIR}/core/*.c"
-)
+# Define source directories
+set(CORE_DIR ${SOURCE_DIR}/core)
+set(ENTITIES_DIR ${SOURCE_DIR}/entities)
+set(WORLD_DIR ${SOURCE_DIR}/world)
+set(RESOURCE_DIR ${SOURCE_DIR}/resource)
+set(UTILS_DIR ${SOURCE_DIR}/utils)
 
-file(GLOB ENTITY_SOURCES
-    "${SOURCE_DIR}/entities/*.c"
-)
+# Collect source files
+file(GLOB CORE_SOURCES "${CORE_DIR}/*.c")
+file(GLOB ENTITIES_SOURCES "${ENTITIES_DIR}/*.c")
+file(GLOB WORLD_SOURCES "${WORLD_DIR}/*.c")
+file(GLOB RESOURCE_SOURCES "${RESOURCE_DIR}/*.c")
+file(GLOB UTILS_SOURCES "${UTILS_DIR}/*.c")
 
-file(GLOB GAME_SOURCES
-    "${SOURCE_DIR}/*.c"
-)
+# Create libraries
+add_library(CoreLib ${CORE_SOURCES})
+add_library(EntitiesLib ${ENTITIES_SOURCES})
+add_library(WorldLib ${WORLD_SOURCES})
+add_library(ResourceLib ${RESOURCE_SOURCES})
+add_library(UtilsLib ${UTILS_SOURCES})
 
-# Create static libraries for each component
-add_library(CoreLib STATIC ${CORE_SOURCES})
-add_library(EntityLib STATIC ${ENTITY_SOURCES})
-
-# Set properties for the libraries
-set_target_properties(CoreLib EntityLib PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-    C_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON
-    ARCHIVE_OUTPUT_DIRECTORY "${WORKSPACE_DIR}/lib"
-    LIBRARY_OUTPUT_DIRECTORY "${WORKSPACE_DIR}/lib"
-    RUNTIME_OUTPUT_DIRECTORY "${WORKSPACE_DIR}/bin"
-)
-
-# Add include directories for libraries
-target_include_directories(CoreLib PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
-    ${SOURCE_DIR}
-    ${SOURCE_DIR}/core
+# Set include directories for each library
+target_include_directories(CoreLib PRIVATE 
+    ${INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/external/raylib/src
 )
 
-target_include_directories(EntityLib PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
-    ${SOURCE_DIR}
-    ${SOURCE_DIR}/entities
+target_include_directories(EntitiesLib PRIVATE 
+    ${INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/external/raylib/src
 )
+
+target_include_directories(WorldLib PRIVATE 
+    ${INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/external/raylib/src
+)
+
+target_include_directories(ResourceLib PRIVATE 
+    ${INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/external/raylib/src
+)
+
+target_include_directories(UtilsLib PRIVATE 
+    ${INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/external/raylib/src
+)
+
+# Set compile definitions for each library
+target_compile_definitions(CoreLib PRIVATE BUILDING_CORE_LIB)
+target_compile_definitions(EntitiesLib PRIVATE BUILDING_ENTITY_LIB)
+target_compile_definitions(WorldLib PRIVATE BUILDING_WORLD_LIB)
+target_compile_definitions(ResourceLib PRIVATE BUILDING_RESOURCE_LIB)
+target_compile_definitions(UtilsLib PRIVATE BUILDING_UTILS_LIB)
+
+# Add debug memory tracking in debug mode
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(CoreLib PRIVATE DEBUG_MEMORY_TRACKING)
+    target_compile_definitions(EntitiesLib PRIVATE DEBUG_MEMORY_TRACKING)
+    target_compile_definitions(WorldLib PRIVATE DEBUG_MEMORY_TRACKING)
+    target_compile_definitions(ResourceLib PRIVATE DEBUG_MEMORY_TRACKING)
+    target_compile_definitions(UtilsLib PRIVATE DEBUG_MEMORY_TRACKING)
+endif()
 
 # Create main executable
-add_executable(${PROJECT_NAME} ${GAME_SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCE_DIR}/main.c)
 
-# Enable exports for linking with tests
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    ENABLE_EXPORTS ON
-    WINDOWS_EXPORT_ALL_SYMBOLS ON
-    RUNTIME_OUTPUT_DIRECTORY "${WORKSPACE_DIR}/bin"
-    DEBUG_POSTFIX "d"
-    PDB_OUTPUT_DIRECTORY "${WORKSPACE_DIR}/bin"
+# Link libraries to main executable
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    CoreLib
+    EntitiesLib
+    WorldLib
+    ResourceLib
+    UtilsLib
+    raylib
 )
 
-# Add include directories for main executable
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
-    ${SOURCE_DIR}
-    ${SOURCE_DIR}/core
-    ${SOURCE_DIR}/entities
+# Set include directories for main executable
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    ${INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/external/raylib/src
 )
 
-# Link libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    CoreLib
-    EntityLib
-    raylib
-    ${OPENGL_LIBRARIES}
-    ${CMAKE_DL_LIBS}
-)
-
-if(WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
-    
-    # Windows-specific linker flags
-    target_link_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:/DEBUG>
-        $<$<CONFIG:Debug>:/INCREMENTAL:NO>
-        $<$<CONFIG:Debug>:/OPT:NOREF>
-        $<$<CONFIG:Release>:/OPT:REF>
-        $<$<CONFIG:Release>:/INCREMENTAL:NO>
-    )
-endif()
-
-# Ensure proper symbol export/import
-if(WIN32)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE
-        GRAPHICS_API_OPENGL_33
-        PLATFORM_DESKTOP
-        BUILD_LIBTYPE_SHARED
-    )
-    
-    target_compile_definitions(CoreLib PRIVATE 
-        BUILDING_CORE_LIB
-        $<$<CONFIG:Debug>:_DEBUG>
-    )
-    target_compile_definitions(EntityLib PRIVATE 
-        BUILDING_ENTITY_LIB
-        $<$<CONFIG:Debug>:_DEBUG>
-    )
-endif()
-
-# Apply warning flags
+# Set warning flags for main executable
 if(MSVC)
-    foreach(TARGET CoreLib EntityLib ${PROJECT_NAME})
-        target_compile_options(${TARGET} PRIVATE 
-            ${PROJECT_WARNINGS}
-            ${COMMON_WARNING_SUPPRESSIONS}
-        )
-    endforeach()
+    target_compile_options(${PROJECT_NAME} PRIVATE ${PROJECT_WARNINGS} ${COMMON_WARNING_SUPPRESSIONS})
 endif()
 
 # Copy resources to build directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${PROJECT_SOURCE_DIR}/../resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
+    ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
 )
 
 # Add tests
@@ -208,5 +189,13 @@ if(DOXYGEN_FOUND)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Generating API documentation with Doxygen"
         VERBATIM
+    )
+endif()
+
+if(MSVC)
+    target_compile_options(raylib PRIVATE
+        /wd4267  # size_t to int conversion
+        /wd4018  # signed/unsigned mismatch
+        /wd4244  # double to float conversion
     )
 endif() 

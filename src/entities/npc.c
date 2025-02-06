@@ -1,17 +1,23 @@
-#include "../../include/entities/npc.h"
-#include "../../include/world.h"
-#include "../../include/resource_manager.h"
-#include "../../include/logger.h"
-#include "../../include/warning_suppression.h"
-#include "../../include/entities/player.h"
+#include "utils/warning_suppression.h"
+#include "entities/npc.h"
+#include "entities/entity.h"
+#include "entities/entity_types.h"
+#include "entities/player.h"
+#include "world/world.h"
+#include "resource/resource_manager.h"
+#include "utils/debug.h"
+#include "utils/constants.h"
+#include <raymath.h>  // Must come before raylib.h
+#include <raylib.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 BEGIN_EXTERNAL_WARNINGS
 
 // External includes
 #include <raymath.h>  // Must come before raylib.h
 #include <raylib.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 
 END_EXTERNAL_WARNINGS

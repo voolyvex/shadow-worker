@@ -1,4 +1,4 @@
-#include "../include/warning_suppression.h"
+#include "utils/warning_suppression.h"
 
 BEGIN_EXTERNAL_WARNINGS
 
@@ -8,10 +8,13 @@ BEGIN_EXTERNAL_WARNINGS
 
 END_EXTERNAL_WARNINGS
 
-#include "../include/game.h"
-#include "../include/logger.h"
+#include "core/game.h"
+#include "utils/logger.h"
+#include "utils/debug.h"
+#include "utils/crash_handler.h"
 
 int main(void) {
+    setupCrashHandler();
     // Initialize logging system
     if (!Logger_Init("shadow_worker.log")) {
         return 1;
@@ -48,30 +51,13 @@ int main(void) {
     
     // Main game loop
     while (!WindowShouldClose() && game->isRunning) {
-        Logger_BeginTimer("frame");
-        
-        // Check if game is still valid
-        if (!game || !game->world || !game->resources) {
-            LOG_ERROR(LOG_CORE, "Critical game state error detected");
-            break;
-        }
-        
-        Game_Update();
-        Game_Draw();
-        
-        Logger_EndTimer("frame");
-        
-        // Log performance metrics every 60 frames
-        static int frame_count = 0;
-        if (++frame_count % 60 == 0) {
-            Logger_LogMemoryUsage();
-            LOG_TRACE(LOG_CORE, "FPS: %d", GetFPS());
-        }
+        Game_Update(game);
+        Game_Draw(game);
     }
     
     // Cleanup
-    LOG_INFO(LOG_CORE, "Game shutting down");
-    Game_Unload();
+    LOG_INFO(LOG_CORE, "Shutting down game systems");
+    Game_Unload(game);
     CloseWindow();
     Logger_Shutdown();
     

@@ -1,6 +1,6 @@
-#include "../../include/entity.h"
-#include "../../include/entity_pool.h"
-#include "../../include/logger.h"
+#include "entities/entity.h"
+#include "entities/entity_pool.h"
+#include "utils/logger.h"
 #include <stdlib.h>
 #include <string.h>
 

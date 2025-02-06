@@ -46,8 +46,8 @@ int run_world_tests(void) {
 static int TestWorldCreation(void) {
     printf("\nTesting World Creation...\n");
     
-    // Get the global resource manager
-    ResourceManager* resources = GetResourceManager();
+    // Get the test resource manager
+    ResourceManager* resources = GetTestResourceManager();
     TEST_NOT_NULL(resources);
     
     // Create world with the resource manager
@@ -62,14 +62,14 @@ static int TestWorldCreation(void) {
     
     // Clean up
     DestroyWorld(world);
-    // Don't destroy the global resource manager
+    // Don't destroy the test resource manager
     
     return 0;
 }
 
 static int TestEntityManagement(void) {
-    // Get the global resource manager
-    ResourceManager* resources = GetResourceManager();
+    // Get the test resource manager
+    ResourceManager* resources = GetTestResourceManager();
     TEST_NOT_NULL(resources);
 
     World* world = CreateWorld(10, 10, 9.81f, resources);
@@ -88,8 +88,8 @@ static int TestEntityManagement(void) {
 }
 
 static int TestWorldInteractions(void) {
-    // Get the global resource manager
-    ResourceManager* resources = GetResourceManager();
+    // Get the test resource manager
+    ResourceManager* resources = GetTestResourceManager();
     TEST_NOT_NULL(resources);
 
     World* world = CreateWorld(10, 10, 9.81f, resources);
@@ -101,9 +101,9 @@ static int TestWorldInteractions(void) {
     Tile resultTile = GetTileAt(world, 5, 5);
     TEST_EQUAL_ENUM(resultTile.type, TILE_WALL);
     
-    // Test walkability
-    Vector2 wallPos = {5, 5};
-    Vector2 emptyPos = {0, 0};
+    // Test walkability with proper world coordinates
+    Vector2 wallPos = {5.0f * TILE_SIZE, 5.0f * TILE_SIZE};  // Convert tile coordinates to world coordinates
+    Vector2 emptyPos = {0.0f * TILE_SIZE, 0.0f * TILE_SIZE};  // Convert tile coordinates to world coordinates
     TEST_ASSERT(!IsWalkable(world, wallPos));  // Wall tile should not be walkable
     TEST_ASSERT(IsWalkable(world, emptyPos));   // Empty tile should be walkable
     
@@ -114,9 +114,8 @@ static int TestWorldInteractions(void) {
 void test_world_tile_operations(void) {
     LOG_INFO(LOG_CORE, "Starting tile operations test");
     
-    // Initialize resource manager
-    assert(InitResourceManager());
-    ResourceManager* resources = GetResourceManager();
+    // Get the test resource manager
+    ResourceManager* resources = GetTestResourceManager();
     assert(resources != NULL);
     
     // Create world
@@ -149,9 +148,8 @@ void test_world_tile_operations(void) {
 void test_world_object_operations(void) {
     LOG_INFO(LOG_CORE, "Starting object operations test");
     
-    // Initialize resource manager
-    assert(InitResourceManager());
-    ResourceManager* resources = GetResourceManager();
+    // Get the test resource manager
+    ResourceManager* resources = GetTestResourceManager();
     assert(resources != NULL);
     
     // Create world

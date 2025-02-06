@@ -1,3 +1,63 @@
+# Shadow Worker Development Guide
+
+## Project Structure
+
+The project follows a modular architecture with clear separation of concerns:
+
+```
+shadow-worker/
+├── include/                 # Public headers
+│   ├── core/               # Core systems
+│   ├── entities/           # Entity management
+│   ├── world/             # World and map systems
+│   ├── resource/          # Resource management
+│   └── utils/             # Utilities
+├── src/                    # Implementation files
+│   ├── core/              # Core system implementations
+│   ├── entities/          # Entity implementations
+│   ├── world/             # World system implementations
+│   ├── resource/          # Resource management implementations
+│   └── utils/             # Utility implementations
+├── tests/                  # Test suites
+├── docs/                   # Documentation
+│   ├── api/               # API documentation
+│   ├── guides/            # Development guides
+│   └── architecture/      # Architecture documentation
+└── resources/             # Game resources
+```
+
+## Development Guidelines
+
+### 1. File Organization
+- Headers go in `include/` under the appropriate category
+- Implementations go in `src/` mirroring the include structure
+- Keep related files together in their category directory
+
+### 2. Component System
+The component system uses two key elements:
+- Component Flags: Define available components (`core/component_flags.h`)
+- Component Registry: Manages component storage (`core/component_registry.h`)
+
+### 3. Entity Management
+- Entity creation/destruction through entity pool
+- Component attachment via component registry
+- Clear ownership and lifecycle management
+
+### 4. Resource Management
+- Centralized resource loading through resource manager
+- Texture management via texture manager
+- Sound resources via sound manager
+
+### 5. World System
+- World state management in world.h
+- Map generation and management
+- Entity spawning and management
+
+## Building and Testing
+
+See `testing.md` for detailed testing procedures.
+See `validation.md` for validation requirements.
+
 # Development Guides
 
 This section contains comprehensive guides for developing with the Shadow Worker engine.

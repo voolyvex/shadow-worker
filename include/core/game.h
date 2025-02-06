@@ -1,8 +1,12 @@
-#ifndef GAME_H
-#define GAME_H
+#ifndef SHADOW_WORKER_GAME_H
+#define SHADOW_WORKER_GAME_H
 
+#include "utils/warning_suppression.h"
+
+BEGIN_EXTERNAL_WARNINGS
 #include <raylib.h>
 #include <stdbool.h>
+END_EXTERNAL_WARNINGS
 
 // Forward declarations
 struct World;
@@ -39,9 +43,9 @@ typedef struct Game {
 
 // Core game functions
 Game* Game_Init(void);
-void Game_Update(void);
-void Game_Draw(void);
-void Game_Unload(void);
+void Game_Update(Game* game);
+void Game_Draw(Game* game);
+void Game_Unload(Game* game);
 
 // Game state management
 void Game_TogglePause(Game* game);
@@ -49,11 +53,4 @@ void Game_ChangeState(Game* game, GameState newState);
 void Game_ResetState(Game* game);
 void Game_UpdateCamera(Game* game);
 
-// World access
-struct World* GetWorld(void);
-
-// Function declarations
-bool InitGame(void);
-void CleanupGame(void);
-
-#endif // GAME_H 
+#endif // SHADOW_WORKER_GAME_H 
